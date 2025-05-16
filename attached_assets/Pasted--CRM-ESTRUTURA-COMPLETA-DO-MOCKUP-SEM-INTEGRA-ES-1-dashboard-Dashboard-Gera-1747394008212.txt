@@ -1,0 +1,222 @@
+**CRM - ESTRUTURA COMPLETA DO MOCKUP (SEM INTEGRAÇÕES)**
+
+---
+
+### 1. /dashboard (Dashboard Geral)
+
+**Componentes:**
+
+* Card: Total de Clientes
+* Card: Tarefas do Dia
+* Card: Faturas em Aberto
+* Card: Propostas Enviadas
+* Gráfico de Tarefas por Status (barra horizontal ou doughnut)
+* Gráfico de Faturamento Mensal (linha)
+* Lista de Atividades Recentes
+
+  * Ex: "João finalizou a tarefa X" | "Nova proposta enviada para Cliente Y"
+
+**Recursos Visuais:**
+
+* Filtros por período (7 dias, 30 dias, personalizado)
+* Animações de entrada
+
+---
+
+### 2. /clients (Clientes)
+
+**Componentes:**
+
+* Tabela com colunas:
+
+  * Nome da empresa
+  * Responsável
+  * Início do contrato
+  * Status
+  * Ações (ver, editar, excluir)
+* Campo de busca
+* Filtros: Categoria, status, período de contrato
+* Botão "Novo Cliente"
+
+**Formulário de Cadastro/Editar Cliente:**
+
+* Nome da empresa, Nome do contato, E-mail, Telefone
+* CNPJ/CPF, Endereço, Instagram, Facebook, LinkedIn
+* Dia do pagamento, Valor do contrato
+* Início/Fim do contrato, Categoria, Descrição
+* Campo de observações
+* Upload de arquivos (contratos, briefing)
+
+---
+
+### 3. /clients/\:id (Detalhe do Cliente)
+
+**Seções:**
+
+* Dados principais (nome, e-mail, redes sociais)
+* Projetos relacionados (cards com status/progresso)
+* Tarefas ativas
+* Faturas e Histórico de pagamentos
+* Propostas enviadas
+* Arquivos anexados
+* Notas internas
+
+---
+
+### 4. /projects (Projetos)
+
+**Componentes:**
+
+* Cards ou Tabela de projetos
+
+  * Nome do projeto, Cliente, Responsável, Início, Status, Progresso (%)
+* Filtros: Cliente, Status, Responsável
+* Botão "Novo Projeto"
+
+**Formulário do Projeto:**
+
+* Nome, Descrição
+* Cliente vinculado
+* Responsável principal
+* Início e término previstos
+* Tags, arquivos, status
+
+---
+
+### 5. /projects/\:id (Detalhe do Projeto)
+
+**Seções:**
+
+* Overview do projeto: dados, progresso
+* Tarefas (listadas ou Kanban embutido)
+* Time envolvido (foto, nome, cargo)
+* Comentários/reuniões
+* Arquivos e documentos
+
+---
+
+### 6. /tasks (Tarefas - Kanban)
+
+**Componentes:**
+
+* Quadro Kanban com colunas:
+
+  * Backlog, Em Execução, Teste, Finalização
+* Cada card de tarefa:
+
+  * Nome, Responsável, Prazo, Tags, Prioridade
+  * Checklist, Comentários, Anexos
+* Botão "Nova Tarefa"
+* Filtro por projeto, prazo, responsável, prioridade
+
+---
+
+### 7. /proposals (Propostas)
+
+**Componentes:**
+
+* Lista de propostas
+
+  * Cliente, Valor, Status (rascunho, enviada, aceita, recusada), Data
+* Botão "Nova Proposta"
+
+**Editor de Proposta:**
+
+* Cliente vinculando
+* Campos de texto (descrição, serviços)
+* Valor, prazo, vencimento
+* Geração de PDF simulado
+* Botão "Converter em Projeto e Fatura"
+
+---
+
+### 8. /invoices (Faturas)
+
+**Componentes:**
+
+* Tabela: Cliente, Valor, Vencimento, Status
+* Filtros por status e período
+* Botão "Nova Fatura"
+
+**Formulário de Fatura:**
+
+* Cliente, Valor, Descrição, Data de vencimento
+* Link de pagamento (placeholder)
+* Botão gerar PDF
+
+---
+
+### 9. /expenses (Despesas)
+
+**Componentes:**
+
+* Lista de despesas com tipo, categoria, valor, recorrência
+* Filtro por tipo, mês e categoria
+* Gráfico de pizza com despesas por tipo
+* Botão "Nova Despesa"
+
+---
+
+### 10. /support (Tickets de Suporte)
+
+**Componentes:**
+
+* Lista de tickets: Cliente, Status, Tipo, Data
+* Aba de conversa com estilo chat
+* Campo "Nova Resposta"
+* Notas internas (visível apenas para equipe)
+* Botão "Novo Ticket"
+
+---
+
+### 11. /calendar (Calendário)
+
+**Componentes:**
+
+* Calendário mensal/semanal
+* Visualização de tarefas por data e cor
+* Modal ao clicar: nome da tarefa, projeto, responsável, prazo
+* Botão "Criar novo evento ou tarefa"
+
+---
+
+### 12. /settings (Configurações)
+
+**Seções:**
+
+* Dados da empresa (nome, e-mail, CNPJ, logo)
+* Permissões por papel (admin, gerente, operador, cliente)
+* Preferências (notificações, tema, idioma)
+* Placeholder para chaves de API futura (Stripe, Email, Firebase)
+
+---
+
+### 13. /users (Usuários)
+
+**Componentes:**
+
+* Lista com nome, e-mail, papel, status
+* Botão "Convidar membro"
+* Modal de permissões (checkbox por módulo)
+
+---
+
+### 14. /login & /register
+
+**Componentes:**
+
+* Formulário clássico com placeholders
+* E-mail, senha, lembrar, modo escuro/claro
+* Mensagem de "Esqueceu sua senha?"
+* Registro (nome, e-mail, senha, confirmar senha)
+
+---
+
+### 15. /profile (Perfil do Usuário)
+
+**Seções:**
+
+* Dados pessoais (nome, e-mail, telefone)
+* Foto de perfil (upload)
+* Preferências pessoais (notificações, tema, idioma)
+* Botão alterar senha
