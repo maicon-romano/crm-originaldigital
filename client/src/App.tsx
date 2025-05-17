@@ -31,12 +31,13 @@ interface AdminRouteProps {
 }
 
 function AdminRoute({ children }: AdminRouteProps) {
-  const { user, isLoading } = useAuth();
+  // Usamos o hook useAuth que já foi atualizado para identificar administradores
+  const { user, isLoading, isAdmin } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    // Se não estiver carregando e o usuário não for admin, redireciona
-    if (!isLoading && user && user.role !== 'admin') {
+    // Se não estiver carregando e o usuário não for administrador, redireciona
+    if (!isLoading && user && !isAdmin) {
       toast({
         title: "Acesso negado",
         description: "Você não tem permissão para acessar esta página",
@@ -44,7 +45,7 @@ function AdminRoute({ children }: AdminRouteProps) {
       });
       navigate('/dashboard');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, isAdmin, navigate]);
 
   // Se estiver carregando, mostra um indicador de carregamento
   if (isLoading) {
@@ -55,12 +56,12 @@ function AdminRoute({ children }: AdminRouteProps) {
     );
   }
 
-  // Se não estiver autenticado ou não for admin, não renderiza nada
-  if (!user || user.role !== 'admin') {
+  // Se não estiver autenticado ou não for administrador, não renderiza nada
+  if (!user || !isAdmin) {
     return null;
   }
 
-  // Se for admin, renderiza o conteúdo
+  // Se for administrador, renderiza o conteúdo
   return <>{children}</>;
 }
 
