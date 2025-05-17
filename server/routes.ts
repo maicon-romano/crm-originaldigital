@@ -119,6 +119,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao excluir usuário", error: error.message });
     }
   });
+  
+  // API para criar usuários no Firestore usando o Admin SDK
+  app.post("/api/users", async (req, res) => {
+    try {
+      const userData = req.body;
+      
+      if (!userData.email || !userData.name || !userData.firebaseUid) {
+        return res.status(400).json({ 
+          message: "Dados incompletos. Forneça email, name e firebaseUid."
+        });
+      }
+      
+      // Verificar se já existe um usuário com o mesmo e-mail
+      const existingUser = await getFirestoreUserByEmail(userData.email);
+      if (existingUser) {
+        return res.status(409).json({ message: "Já existe um usuário com este e-mail" });
+      }
+      
+      // Criar o usuário no Firestore
+      const newUser = await createFirestoreUser({
+        id: userData.firebaseUid,
+        email: userData.email,
+        name: userData.name,
+        username: userData.username || userData.email.split('@')[0],
+        role: userData.role || 'usuario',
+        userType: userData.userType || 'staff',
+        active: true,
+        phone: userData.phone,
+        position: userData.cargo,
+        clientId: userData.clientId,
+        department: userData.department
+      });
+      
+      res.status(201).json(newUser);
+    } catch (error: any) {
+      console.error("Erro ao criar usuário via API:", error);
+      res.status(500).json({ message: "Erro ao criar usuário", error: error.message });
+    }
+  });
 
   // Auth Routes
   app.post("/api/auth/login", async (req, res) => {

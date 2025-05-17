@@ -76,20 +76,17 @@ onAuthStateChanged(auth, (user) => {
 
 // ======== FUNÇÕES PARA GERENCIAR USUÁRIOS NO FIRESTORE ========
 
-// Criar um novo usuário usando Firebase Auth e salvar no Firestore
+// Criar um novo usuário usando Firebase Auth e salvar no Firestore via API do servidor
 export const createUser = async (
   email: string, 
   password: string, 
   displayName: string,
   userType: UserType = 'staff',
-  role: string = 'usuario', // role padrão no Firestore
+  role: 'admin' | 'usuario' | 'cliente' = 'usuario', // role padrão no Firestore
   extraData: Partial<FirestoreUser> = {}
 ): Promise<FirestoreUser> => {
   try {
-    console.log(`Criando novo usuário do tipo ${userType}: ${email}`);
-    
-    // Salvar usuário atual
-    const currentUser = auth.currentUser;
+    console.log(`Criando novo usuário do tipo ${userType} com role ${role}: ${email}`);
     
     // Criar um app temporário para criar o usuário sem deslogar o atual
     const tempApp = initializeApp(firebaseConfig, 'tempApp-' + new Date().getTime());
@@ -103,7 +100,6 @@ export const createUser = async (
       displayName: displayName
     });
     
-    // Criar o usuário no Firestore
     const timestamp = Date.now();
     
     // Preparar dados básicos do usuário
@@ -116,46 +112,34 @@ export const createUser = async (
       role: role,
       active: true,
       createdAt: timestamp,
-      updatedAt: timestamp
+      updatedAt: timestamp,
+      ...extraData // Adicionar campos extras ao objeto básico
     };
     
-    // Adicionar campos extras apenas se tiverem valores definidos
-    if (extraData) {
-      Object.entries(extraData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          userData[key] = value;
-        }
-      });
+    // Enviar dados para o servidor via API POST para salvar no Firestore com permissões elevadas
+    const response = await fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...userData,
+        firebaseUid: userData.id // Adicionar campo para identificar o usuário no Firebase
+      }),
+    });
+    
+    // Verificar se a requisição para o servidor foi bem-sucedida
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Erro ao salvar usuário no Firestore: ${errorData.message || response.statusText}`);
     }
     
-    // Usar fetch para enviar os dados para a API do servidor em vez de salvar diretamente no Firestore
-    // Com isso contornamos as restrições de permissão do Firestore
-    try {
-      // Enviar dados para o servidor via API POST
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...userData,
-          firebaseUid: userData.id // Adicionar campo para identificar o usuário no Firebase
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Erro ao enviar dados para o servidor: ${response.statusText}`);
-      }
-      
-      console.log("Usuário criado com sucesso no Firebase Auth e dados salvos via API");
-    } catch (apiError) {
-      console.error("Erro ao enviar dados para a API:", apiError);
-      // Continuar, pois pelo menos o usuário foi criado no Firebase Auth
-    }
+    console.log("Usuário criado com sucesso no Firebase Auth e dados salvos no Firestore via API");
     
-    // Deslogar do app temporário e limpar recursos
+    // Deslogar do app temporário para não afetar o usuário atual
     await signOut(tempAuth);
     
+    // Retornar os dados do usuário criado
     return userData as FirestoreUser;
   } catch (error: any) {
     console.error("Erro ao criar usuário:", error);
