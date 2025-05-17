@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 import {
   LayoutDashboard,
   Users,
@@ -15,6 +16,9 @@ import {
   Settings,
   ChevronsLeft,
   ChevronsRight,
+  Menu,
+  X,
+  Shield,
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -23,21 +27,35 @@ interface SidebarLinkProps {
   text: string;
   isActive?: boolean;
   collapsed?: boolean;
+  adminOnly?: boolean;
 }
 
-const SidebarLink = ({ href, icon, text, isActive, collapsed }: SidebarLinkProps) => {
+const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false }: SidebarLinkProps) => {
+  const { user } = useAuth();
+  
+  // Se o link for apenas para admin e o usuário não for admin, não mostra o link
+  if (adminOnly && user?.role !== 'admin') {
+    return null;
+  }
+  
   return (
     <Link href={href}>
       <a
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
           isActive
-            ? "bg-gray-900 text-white"
+            ? "bg-primary text-white dark:bg-primary/80"
             : "text-gray-300 hover:bg-gray-700 hover:text-white"
         )}
       >
         <span className="flex-shrink-0 w-5 h-5">{icon}</span>
-        {!collapsed && <span className="font-medium">{text}</span>}
+        {!collapsed && (
+          <span className="font-medium flex-1">
+            {text}
+            {adminOnly && <Shield className="inline-block ml-2 h-3 w-3" />}
+          </span>
+        )}
+        {collapsed && adminOnly && <Shield className="h-3 w-3 absolute right-2 top-2" />}
       </a>
     </Link>
   );
@@ -45,6 +63,7 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed }: SidebarLinkProps
 
 export function Sidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -79,42 +98,42 @@ export function Sidebar() {
     {
       href: '/clients',
       icon: <Users className="h-5 w-5" />,
-      text: 'Clients'
+      text: 'Clientes'
     },
     {
       href: '/projects',
       icon: <FolderKanban className="h-5 w-5" />,
-      text: 'Projects'
+      text: 'Projetos'
     },
     {
       href: '/tasks',
       icon: <CheckSquare className="h-5 w-5" />,
-      text: 'Tasks'
+      text: 'Tarefas'
     },
     {
       href: '/proposals',
       icon: <FileText className="h-5 w-5" />,
-      text: 'Proposals'
+      text: 'Propostas'
     },
     {
       href: '/invoices',
       icon: <File className="h-5 w-5" />,
-      text: 'Invoices'
+      text: 'Faturas'
     },
     {
       href: '/expenses',
       icon: <BanknoteIcon className="h-5 w-5" />,
-      text: 'Expenses'
+      text: 'Despesas'
     },
     {
       href: '/support',
       icon: <Headphones className="h-5 w-5" />,
-      text: 'Support'
+      text: 'Suporte'
     },
     {
       href: '/calendar',
       icon: <Calendar className="h-5 w-5" />,
-      text: 'Calendar'
+      text: 'Calendário'
     }
   ];
 
@@ -122,12 +141,13 @@ export function Sidebar() {
     {
       href: '/users',
       icon: <User className="h-5 w-5" />,
-      text: 'Users'
+      text: 'Usuários',
+      adminOnly: true
     },
     {
       href: '/settings',
       icon: <Settings className="h-5 w-5" />,
-      text: 'Settings'
+      text: 'Configurações'
     }
   ];
 
@@ -157,27 +177,14 @@ export function Sidebar() {
           onClick={() => setMobileMenuOpen(true)}
           className="fixed top-4 left-4 z-50 lg:hidden bg-gray-800 text-white p-2 rounded-md"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
+          <Menu className="h-6 w-6" />
         </button>
       )}
 
       <aside className={sidebarClasses}>
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">
           <div className="flex items-center space-x-2 overflow-hidden">
-            <div className="text-blue-400 text-xl flex-shrink-0">
+            <div className="text-primary text-xl flex-shrink-0">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -187,7 +194,7 @@ export function Sidebar() {
                 <path d="M21 13.242V20h1a1 1 0 0 1 0 2H2a1 1 0 0 1 0-2h1v-6.758A4.496 4.496 0 0 1 1 9.5c0-.827.224-1.624.633-2.303L4.345 2.5a1 1 0 0 1 1.659 0l2.713 4.697c.409.679.633 1.476.633 2.303 0 .997-.33 1.917-.882 2.66.155.937.337 1.433.48 1.84H15.1c.481-1.732 1.654-3 4.9-3 .324 0 .641.03.947.086A.998.998 0 0 1 21 12.5v.742zM7.684 9.636L5.13 5.263 2.576 9.636a2.5 2.5 0 1 0 5.109 0z" />
               </svg>
             </div>
-            {!collapsed && <h1 className="text-xl font-bold">CRM System</h1>}
+            {!collapsed && <h1 className="text-xl font-bold">CRM Original</h1>}
           </div>
           {!isMobile && (
             <button 
@@ -206,20 +213,7 @@ export function Sidebar() {
               onClick={closeMobileMenu}
               className="text-gray-400 hover:text-white"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="h-6 w-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="h-6 w-6" />
             </button>
           )}
         </div>
@@ -234,6 +228,7 @@ export function Sidebar() {
                 text={link.text}
                 isActive={location === link.href || location.startsWith(`${link.href}/`)}
                 collapsed={collapsed}
+                adminOnly={link.adminOnly}
               />
             ))}
           </div>
@@ -248,6 +243,7 @@ export function Sidebar() {
                   text={link.text}
                   isActive={location === link.href}
                   collapsed={collapsed}
+                  adminOnly={link.adminOnly}
                 />
               ))}
             </div>
@@ -261,15 +257,21 @@ export function Sidebar() {
               collapsed && "justify-center"
             )}>
               <div className="relative">
-                <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center">
-                  <User className="h-4 w-4" />
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                  {user?.role === 'admin' ? (
+                    <Shield className="h-4 w-4 text-primary" />
+                  ) : (
+                    <span className="text-primary text-sm font-medium">
+                      {user?.name?.charAt(0) || 'U'}
+                    </span>
+                  )}
                 </div>
                 <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 border border-gray-800"></span>
               </div>
               {!collapsed && (
                 <div className="overflow-hidden">
-                  <p className="text-sm font-medium truncate">Admin User</p>
-                  <p className="text-xs text-gray-500 truncate">admin@example.com</p>
+                  <p className="text-sm font-medium truncate">{user?.name || 'Usuário'}</p>
+                  <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
                 </div>
               )}
             </a>

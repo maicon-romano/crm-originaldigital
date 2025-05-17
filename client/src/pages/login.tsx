@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info, Copy } from 'lucide-react';
+import { FirebaseError } from 'firebase/app';
+import { LockKeyhole, Mail } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um endereço de email válido' }),
@@ -27,8 +27,29 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// Mapear códigos de erro do Firebase para mensagens amigáveis
+const getErrorMessage = (error: any): string => {
+  if (error instanceof FirebaseError) {
+    switch (error.code) {
+      case 'auth/invalid-email':
+        return 'O formato do email não é válido.';
+      case 'auth/user-disabled':
+        return 'Este usuário foi desativado.';
+      case 'auth/user-not-found':
+        return 'Não há usuário correspondente a este email.';
+      case 'auth/wrong-password':
+        return 'Senha incorreta para este email.';
+      case 'auth/too-many-requests':
+        return 'Muitas tentativas de login. Tente novamente mais tarde.';
+      default:
+        return `Erro ao fazer login: ${error.message}`;
+    }
+  }
+  return 'Ocorreu um erro inesperado. Por favor, tente novamente.';
+};
+
 export default function Login() {
-  const { login, demoCredentials } = useAuth();
+  const { login, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,21 +61,6 @@ export default function Login() {
       rememberMe: false,
     },
   });
-
-  const fillDemoCredentials = () => {
-    form.setValue('email', demoCredentials.email);
-    form.setValue('password', demoCredentials.password);
-  };
-
-  const copyCredentials = () => {
-    const text = `Email: ${demoCredentials.email}\nSenha: ${demoCredentials.password}`;
-    navigator.clipboard.writeText(text).then(() => {
-      toast({
-        title: 'Credenciais copiadas',
-        description: 'As credenciais de demonstração foram copiadas para a área de transferência',
-      });
-    });
-  };
 
   async function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
@@ -74,9 +80,10 @@ export default function Login() {
         });
       }
     } catch (error) {
+      const errorMessage = getErrorMessage(error);
       toast({
         title: 'Erro de login',
-        description: 'Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -89,40 +96,8 @@ export default function Login() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">Bem-vindo</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Faça login na sua conta CRM</p>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Faça login no CRM</p>
         </div>
-
-        <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/50">
-          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          <AlertTitle className="text-blue-800 dark:text-blue-300 flex items-center gap-2">
-            Credenciais de demonstração
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6 rounded-full" 
-              onClick={copyCredentials}
-              title="Copiar credenciais"
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </Button>
-          </AlertTitle>
-          <AlertDescription className="text-blue-700 dark:text-blue-400">
-            <div className="grid grid-cols-2 gap-1 text-sm">
-              <span className="font-medium">Email:</span>
-              <span>{demoCredentials.email}</span>
-              <span className="font-medium">Senha:</span>
-              <span>{demoCredentials.password}</span>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-2 w-full bg-white dark:bg-gray-800 text-blue-600 border-blue-300 hover:bg-blue-50"
-              onClick={fillDemoCredentials}
-            >
-              Preencher automaticamente
-            </Button>
-          </AlertDescription>
-        </Alert>
 
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
           <Form {...form}>
@@ -132,7 +107,10 @@ export default function Login() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="seu.email@exemplo.com"
@@ -150,7 +128,10 @@ export default function Login() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Senha</FormLabel>
+                    <FormLabel className="flex items-center gap-2">
+                      <LockKeyhole className="h-4 w-4" />
+                      Senha
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="••••••••"
@@ -187,7 +168,7 @@ export default function Login() {
                     e.preventDefault();
                     toast({
                       title: 'Redefinição de senha',
-                      description: 'A funcionalidade de redefinição de senha é simulada nesta demonstração.',
+                      description: 'Entre em contato com o administrador para redefinir sua senha.',
                     });
                   }}
                 >
@@ -195,25 +176,9 @@ export default function Login() {
                 </a>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
                 {isLoading ? 'Entrando...' : 'Entrar'}
               </Button>
-
-              <div className="text-center mt-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Não tem uma conta?{' '}
-                  <a
-                    href="/register"
-                    className="font-medium text-primary hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate('/register');
-                    }}
-                  >
-                    Registre-se
-                  </a>
-                </p>
-              </div>
             </form>
           </Form>
         </div>

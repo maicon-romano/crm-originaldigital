@@ -14,34 +14,41 @@ function getPageTitle(pathname: string): string {
   
   // Special case for detail pages
   if (parts.length > 1 && !isNaN(Number(parts[1]))) {
-    return `${base.charAt(0).toUpperCase() + base.slice(1)} Details`;
+    switch (base) {
+      case 'clients':
+        return 'Detalhes do Cliente';
+      case 'projects':
+        return 'Detalhes do Projeto';
+      default:
+        return `Detalhes de ${base.charAt(0).toUpperCase() + base.slice(1)}`;
+    }
   }
   
   switch (base) {
     case 'dashboard':
       return 'Dashboard';
     case 'clients':
-      return 'Clients';
+      return 'Clientes';
     case 'projects':
-      return 'Projects';
+      return 'Projetos';
     case 'tasks':
-      return 'Tasks';
+      return 'Tarefas';
     case 'proposals':
-      return 'Proposals';
+      return 'Propostas';
     case 'invoices':
-      return 'Invoices';
+      return 'Faturas';
     case 'expenses':
-      return 'Expenses';
+      return 'Despesas';
     case 'support':
-      return 'Support Tickets';
+      return 'Suporte';
     case 'calendar':
-      return 'Calendar';
+      return 'Calendário';
     case 'users':
-      return 'Users';
+      return 'Usuários';
     case 'settings':
-      return 'Settings';
+      return 'Configurações';
     case 'profile':
-      return 'Your Profile';
+      return 'Seu Perfil';
     default:
       return 'Dashboard';
   }
@@ -55,7 +62,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   // Update page title when location changes
   useEffect(() => {
     setPageTitle(getPageTitle(location));
-    document.title = `${getPageTitle(location)} | CRM System`;
+    document.title = `${getPageTitle(location)} | CRM Original Digital`;
   }, [location]);
 
   // Redirect to login if not authenticated
@@ -68,7 +75,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500" />
+        <div className="flex flex-col items-center">
+          <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent mb-4" />
+          <p className="text-lg font-medium text-gray-600 dark:text-gray-300">Carregando...</p>
+        </div>
       </div>
     );
   }

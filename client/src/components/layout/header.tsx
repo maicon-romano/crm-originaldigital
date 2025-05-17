@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { Bell, ChevronDown } from 'lucide-react';
+import { Bell, ChevronDown, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
 import { ModeToggle } from '@/components/ui/mode-toggle';
+import { toast } from '@/hooks/use-toast';
 
 interface HeaderProps {
   pageTitle: string;
@@ -18,18 +19,31 @@ interface HeaderProps {
 
 export function Header({ pageTitle }: HeaderProps) {
   const [, navigate] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [notifications] = useState([
-    { id: 1, text: 'New client registered', read: false },
-    { id: 2, text: 'Invoice #123 is overdue', read: false },
-    { id: 3, text: 'Project deadline approaching', read: true }
+    { id: 1, text: 'Novo cliente registrado', read: false },
+    { id: 2, text: 'Fatura #123 está vencida', read: false },
+    { id: 3, text: 'Prazo do projeto se aproximando', read: true }
   ]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+      toast({
+        title: 'Logout realizado',
+        description: 'Você saiu do sistema com sucesso'
+      });
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      toast({
+        title: 'Erro ao sair',
+        description: 'Ocorreu um erro ao tentar sair do sistema',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
@@ -53,8 +67,8 @@ export function Header({ pageTitle }: HeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
               <div className="flex justify-between items-center px-4 py-2 border-b">
-                <h3 className="font-medium">Notifications</h3>
-                <Button variant="ghost" size="sm" className="text-xs">Mark all as read</Button>
+                <h3 className="font-medium">Notificações</h3>
+                <Button variant="ghost" size="sm" className="text-xs">Marcar todas como lidas</Button>
               </div>
               {notifications.length > 0 ? (
                 <>
@@ -64,19 +78,19 @@ export function Header({ pageTitle }: HeaderProps) {
                         <div className={`w-2 h-2 mt-2 rounded-full ${notification.read ? 'bg-gray-300' : 'bg-blue-500'}`}></div>
                         <div>
                           <p className="text-sm">{notification.text}</p>
-                          <p className="text-xs text-gray-500 mt-1">1 hour ago</p>
+                          <p className="text-xs text-gray-500 mt-1">1 hora atrás</p>
                         </div>
                       </div>
                     </DropdownMenuItem>
                   ))}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="justify-center text-center py-2 cursor-pointer">
-                    View all notifications
+                    Ver todas as notificações
                   </DropdownMenuItem>
                 </>
               ) : (
                 <div className="p-4 text-center text-sm text-gray-500">
-                  No notifications
+                  Sem notificações
                 </div>
               )}
             </DropdownMenuContent>
@@ -85,26 +99,36 @@ export function Header({ pageTitle }: HeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative flex items-center gap-2 p-1">
-                <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt={user?.name || ''} className="h-8 w-8 object-cover" />
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {user?.role === 'admin' ? (
+                    <Shield className="h-4 w-4 text-primary" />
                   ) : (
-                    <span className="text-gray-500 text-sm font-medium">
-                      {user?.name?.charAt(0) || 'A'}
+                    <span className="text-primary text-sm font-medium">
+                      {user?.name?.charAt(0) || 'U'}
                     </span>
                   )}
                 </div>
-                <span className="hidden md:inline-block text-sm font-medium">
-                  {user?.name || 'Admin User'}
-                </span>
+                <div className="hidden md:flex flex-col items-start">
+                  <span className="text-sm font-medium">
+                    {user?.name || 'Usuário'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {user?.role === 'admin' ? 'Administrador' : 'Usuário'}
+                  </span>
+                </div>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/settings')}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/profile')}>Perfil</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')}>Configurações</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>Sign out</DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                disabled={isLoading}
+              >
+                Sair
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

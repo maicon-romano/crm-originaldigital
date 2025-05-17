@@ -1,88 +1,83 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { auth, loginWithEmailAndPassword, logoutUser } from '../lib/firebase';
 
 interface User {
-  id: number;
+  id: string;
   name: string;
-  email: string;
+  email: string | null;
   role: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
-  demoCredentials: { email: string; password: string };
+  isLoading: boolean;
 }
 
-// Demo credentials for easy login
-const DEMO_CREDENTIALS = {
-  email: 'demo@exemplo.com',
-  password: 'senha123',
-};
+// O ID definido para o usuário admin
+const ADMIN_UID = 'riwAaqRuxpXBP0uT1rMO1KGBsIW2';
 
-// Demo user information
-const DEMO_USER = {
-  id: 1,
-  name: 'Usuário Demo',
-  email: DEMO_CREDENTIALS.email,
-  role: 'admin',
+// Converter usuário do Firebase para nosso modelo de usuário
+const mapFirebaseUserToUser = (firebaseUser: FirebaseUser): User => {
+  const isAdmin = firebaseUser.uid === ADMIN_UID;
+  
+  return {
+    id: firebaseUser.uid,
+    name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
+    email: firebaseUser.email,
+    role: isAdmin ? 'admin' : 'user',
+  };
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   login: async () => false,
-  logout: () => {},
+  logout: async () => {},
   isAuthenticated: false,
-  demoCredentials: DEMO_CREDENTIALS,
+  isLoading: true,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Check for any previously saved authentication in localStorage
+  // Monitorar o estado de autenticação do Firebase
   useEffect(() => {
-    const savedUser = localStorage.getItem('crm_user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Failed to parse saved user:', error);
-        localStorage.removeItem('crm_user');
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        const mappedUser = mapFirebaseUserToUser(firebaseUser);
+        setUser(mappedUser);
+      } else {
+        setUser(null);
       }
-    }
+      setIsLoading(false);
+    });
+
+    // Limpar o listener quando o componente for desmontado
+    return () => unsubscribe();
   }, []);
   
-  // In a real application, this would make an API call to authenticate
-  const login = async (email: string, password: string) => {
-    // For demo purposes, check if credentials match demo login
-    if (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) {
-      // Set user data from demo info
-      setUser(DEMO_USER);
-      // Save to localStorage for session persistence
-      localStorage.setItem('crm_user', JSON.stringify(DEMO_USER));
-      return true;
+  // Função de login com Firebase
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const firebaseUser = await loginWithEmailAndPassword(email, password);
+      return !!firebaseUser;
+    } catch (error) {
+      console.error('Login failed:', error);
+      return false;
     }
-    
-    // For testing, allow any non-empty credentials to login as regular user
-    if (email && password) {
-      const userData = {
-        id: 2,
-        name: email.split('@')[0],
-        email: email,
-        role: 'user',
-      };
-      setUser(userData);
-      localStorage.setItem('crm_user', JSON.stringify(userData));
-      return true;
-    }
-    
-    return false;
   };
   
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('crm_user');
+  // Função de logout com Firebase
+  const logout = async (): Promise<void> => {
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
   
   const isAuthenticated = !!user;
@@ -93,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, 
       logout, 
       isAuthenticated,
-      demoCredentials: DEMO_CREDENTIALS
+      isLoading
     }}>
       {children}
     </AuthContext.Provider>
