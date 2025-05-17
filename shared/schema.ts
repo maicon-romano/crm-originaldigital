@@ -5,19 +5,29 @@ import { z } from "zod";
 // User Model
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  firebaseUid: text("firebase_uid").unique(), // ID do Firebase Authentication
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  position: text("position"),
+  phone: text("phone"),
+  // Tipos de usuário: "admin", "staff", "client"
+  userType: text("user_type").default("staff").notNull(),
+  // Privilégios: "admin" (tudo), "staff" (sem acesso financeiro), "client" (apenas próprios dados)
+  role: text("role").default("staff").notNull(),
   avatar: text("avatar"),
-  role: text("role").default("user").notNull(),
+  position: text("position"),
+  department: text("department"),
+  active: boolean("active").default(true).notNull(),
+  clientId: integer("client_id"), // Referência a um cliente (apenas se userType=client)
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+  lastLogin: true,
 });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;

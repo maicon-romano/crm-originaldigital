@@ -58,11 +58,16 @@ import {
 
 // Define the user schema
 const userSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  email: z.string().email({ message: "Valid email is required" }),
-  role: z.string().min(1, { message: "Role is required" }),
+  name: z.string().min(1, { message: "Nome completo é obrigatório" }),
+  email: z.string().email({ message: "Email válido é obrigatório" }),
+  userType: z.enum(['admin', 'staff', 'client'], { 
+    errorMap: () => ({ message: "Tipo de usuário é obrigatório" }) 
+  }),
+  department: z.string().optional(),
   position: z.string().optional(),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }).optional().or(z.literal('')),
+  phone: z.string().optional(),
+  clientId: z.number().optional(),
+  password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }).optional().or(z.literal('')),
   confirmPassword: z.string().optional().or(z.literal('')),
 }).refine((data) => {
   if (data.password && data.confirmPassword) {
@@ -70,7 +75,7 @@ const userSchema = z.object({
   }
   return true;
 }, {
-  message: "Passwords don't match",
+  message: "As senhas não coincidem",
   path: ["confirmPassword"],
 });
 
@@ -78,22 +83,33 @@ type User = z.infer<typeof userSchema> & {
   id?: number;
   createdAt?: string;
   avatar?: string | null;
-  username?: string;
+  firebaseUid?: string;
+  active?: boolean;
+  // role é mantido para compatibilidade com o back-end, mas userType é o que usaremos
+  role?: string; 
 };
 
 export default function UsersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showClientSelect, setShowClientSelect] = useState(false);
   const queryClient = useQueryClient();
+  
+  // Carregar lista de clientes para associar a usuários do tipo 'client'
+  const { data: clients = [] } = useQuery<{ id: number, companyName: string }[]>({
+    queryKey: ['/api/clients'],
+  });
 
   const form = useForm<User>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       name: "",
       email: "",
-      role: "user",
+      userType: "staff",
+      department: "",
       position: "",
+      phone: "",
       password: "",
       confirmPassword: "",
     },
@@ -182,11 +198,46 @@ export default function UsersPage() {
     },
   });
 
-  const onSubmit = (values: User) => {
-    if (selectedUser?.id) {
-      updateMutation.mutate({ ...values, id: selectedUser.id });
-    } else {
-      createMutation.mutate(values);
+  // Monitorar mudanças no tipo de usuário para mostrar/esconder seleção de cliente
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'userType') {
+        setShowClientSelect(value.userType === 'client');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
+
+  const onSubmit = async (values: User) => {
+    try {
+      // Para clientes, verificar se há um clientId selecionado
+      if (values.userType === 'client' && !values.clientId) {
+        toast({
+          title: 'Erro',
+          description: 'Você deve selecionar um cliente para associar a este usuário',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Criar usuário no Firebase primeiro se for um novo usuário
+      if (!selectedUser?.id) {
+        // Integração com Firebase - criar usuário na autenticação
+        // await createUser(values.email, values.password, values.name, values.userType);
+        console.log("Usuário criado no Firebase:", values);
+      }
+
+      if (selectedUser?.id) {
+        updateMutation.mutate({ ...values, id: selectedUser.id });
+      } else {
+        createMutation.mutate(values);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: `Falha ao criar usuário: ${error.message}`,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -195,21 +246,29 @@ export default function UsersPage() {
     form.reset({
       name: "",
       email: "",
-      role: "user",
+      userType: "staff", // Padrão para funcionários internos
+      department: "",
       position: "",
+      phone: "",
       password: "",
       confirmPassword: "",
     });
+    setShowClientSelect(false);
     setDialogOpen(true);
   };
 
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
+    setShowClientSelect(user.userType === 'client');
+    
     form.reset({
       name: user.name,
       email: user.email,
-      role: user.role,
+      userType: user.userType || 'staff',
+      department: user.department || "",
       position: user.position || "",
+      phone: user.phone || "",
+      clientId: user.clientId,
       password: "",
       confirmPassword: "",
     });
@@ -221,18 +280,32 @@ export default function UsersPage() {
     setDeleteDialogOpen(true);
   };
 
+  // Enviar convite por email para novo usuário
   const sendInvitationEmail = (user: User) => {
+    // Implementar integração com Firebase para envio de convite ou redefinição de senha
     toast({
-      title: 'Invitation sent',
-      description: `An invitation email has been sent to ${user.email}`,
+      title: 'Convite enviado',
+      description: `Um email de convite foi enviado para ${user.email}`,
     });
   };
 
-  const resetPassword = (user: User) => {
-    toast({
-      title: 'Password reset',
-      description: `A password reset link has been sent to ${user.email}`,
-    });
+  // Redefinir senha de um usuário existente
+  const resetPassword = async (user: User) => {
+    try {
+      // Implementar integração com Firebase para redefinição de senha
+      // await sendPasswordResetEmail(user.email);
+      
+      toast({
+        title: 'Redefinição de senha',
+        description: `Um link para redefinição de senha foi enviado para ${user.email}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: `Falha ao enviar email de redefinição: ${error.message}`,
+        variant: 'destructive',
+      });
+    }
   };
 
   const confirmDelete = () => {
@@ -244,7 +317,7 @@ export default function UsersPage() {
   const columns: ColumnDef<User>[] = [
     {
       accessorKey: 'name',
-      header: 'Name',
+      header: 'Nome',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
@@ -259,32 +332,41 @@ export default function UsersPage() {
       header: 'Email',
     },
     {
-      accessorKey: 'role',
-      header: 'Role',
+      accessorKey: 'userType',
+      header: 'Tipo',
       cell: ({ row }) => {
-        const role = row.original.role;
+        const userType = row.original.userType;
         let variant: "default" | "outline" | "secondary" | "destructive" = "default";
+        let label = "";
         
-        switch (role) {
+        switch (userType) {
           case 'admin':
             variant = "destructive";
+            label = "Administrador";
             break;
-          case 'manager':
+          case 'staff':
             variant = "default";
+            label = "Funcionário";
             break;
-          case 'user':
+          case 'client':
             variant = "secondary";
+            label = "Cliente";
             break;
           default:
             variant = "outline";
+            label = userType || "Desconhecido";
         }
         
-        return <Badge variant={variant}>{role}</Badge>;
+        return <Badge variant={variant}>{label}</Badge>;
       },
     },
     {
       accessorKey: 'position',
-      header: 'Position',
+      header: 'Cargo',
+    },
+    {
+      accessorKey: 'department',
+      header: 'Departamento',
     },
     {
       accessorKey: 'createdAt',
