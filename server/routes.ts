@@ -70,6 +70,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/users", async (req, res) => {
+    try {
+      console.log("Criando novo usuário:", req.body);
+      
+      // Validar dados de entrada
+      const validatedData = insertUserSchema.parse(req.body);
+      
+      // Verificar se o email já existe
+      if (validatedData.email) {
+        const existingUserEmail = await storage.getUserByEmail(validatedData.email);
+        if (existingUserEmail) {
+          return res.status(400).json({ message: "Email já em uso" });
+        }
+      }
+      
+      // Criar o usuário no banco de dados
+      const newUser = await storage.createUser(validatedData);
+      
+      // Remover a senha da resposta
+      const { password, ...userWithoutPassword } = newUser;
+      
+      return res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      console.error("Erro ao criar usuário:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   app.get("/api/users/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

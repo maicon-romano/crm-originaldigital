@@ -122,12 +122,24 @@ export default function UsersPage() {
 
   const createMutation = useMutation({
     mutationFn: async (user: User) => {
+      // Verificar se é um usuário válido com todos os dados necessários
+      if (!user.email || !user.name || !user.userType) {
+        throw new Error('Dados incompletos. Por favor, preencha todos os campos obrigatórios.');
+      }
+      
+      // Preparar os dados para envio
       const dataToSend = {
         ...user,
-        username: user.email.split('@')[0], // Simple username generation
+        username: user.email.split('@')[0], // Geração simples de username
+        role: user.userType, // Garantir compatibilidade com backend
       };
+      
+      // Remover campos desnecessários
       delete dataToSend.confirmPassword;
       
+      console.log('Enviando dados para criação de usuário:', dataToSend);
+      
+      // Enviar ao servidor
       const res = await apiRequest('POST', '/api/users', dataToSend);
       return res.json();
     },
@@ -135,14 +147,14 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       setDialogOpen(false);
       toast({
-        title: 'User created',
-        description: 'The user has been created successfully',
+        title: 'Usuário criado',
+        description: 'O usuário foi criado com sucesso',
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
-        title: 'Error',
-        description: `Failed to create user: ${error}`,
+        title: 'Erro',
+        description: `Falha ao criar usuário: ${error.message || error}`,
         variant: 'destructive',
       });
     },
@@ -232,15 +244,21 @@ export default function UsersPage() {
             values.userType as 'admin' | 'staff' | 'client'
           );
           
-          // Adicionar o ID do Firebase ao usuário
-          const userWithFirebaseData = {
+          console.log("Firebase user created:", firebaseUser);
+          
+          // Adicionar o ID do Firebase e outras informações necessárias
+          const userToCreate = {
             ...values,
             firebaseUid: firebaseUser.uid,
-            active: true
+            active: true,
+            role: values.userType, // Garantir que o role seja o mesmo que userType
+            username: values.email.split('@')[0] // Username simples baseado no email
           };
           
+          console.log("Creating user in database:", userToCreate);
+          
           // Salvar no banco de dados
-          createMutation.mutate(userWithFirebaseData);
+          createMutation.mutate(userToCreate);
           
         } catch (error: any) {
           if (error.code === 'auth/email-already-in-use') {
