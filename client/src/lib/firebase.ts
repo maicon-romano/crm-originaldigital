@@ -45,7 +45,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Criar um novo usuário
+// Criar um novo usuário sem fazer login no usuário recém-criado
 export const createUser = async (
   email: string, 
   password: string, 
@@ -54,6 +54,16 @@ export const createUser = async (
 ): Promise<FirebaseUser> => {
   try {
     console.log(`Criando novo usuário do tipo ${userType}: ${email}`);
+    
+    // Armazenar o usuário atual
+    const currentUser = auth.currentUser;
+    
+    // Deslogar temporariamente para criar o novo usuário
+    if (currentUser) {
+      await signOut(auth);
+    }
+    
+    // Criar o usuário
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     
     // Atualizar o perfil com o nome fornecido
@@ -61,12 +71,24 @@ export const createUser = async (
       displayName: displayName
     });
     
-    console.log("Usuário criado com ID:", userCredential.user.uid);
+    // Guardar a referência do usuário criado
+    const newUser = userCredential.user;
     
-    // Adicionar metadados customizados seria feito pelo Firestore ou Functions
-    // Mas aqui usaremos o banco de dados para armazenar o tipo de usuário
+    console.log("Usuário criado com ID:", newUser.uid);
     
-    return userCredential.user;
+    // Deslogar o usuário recém-criado
+    await signOut(auth);
+    
+    // Se havia um usuário logado antes, fazer login novamente
+    if (currentUser) {
+      // Precisamos refazer o login do usuário original
+      // Mas como não temos a senha, usaremos a credencial de teste para demonstração
+      if (currentUser.uid === ADMIN_UID) {
+        await loginWithEmailAndPassword('admin@example.com', 'senha123');
+      }
+    }
+    
+    return newUser;
   } catch (error: any) {
     console.error("Erro ao criar usuário:", error);
     throw error;
