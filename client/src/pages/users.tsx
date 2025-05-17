@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { apiRequest } from '@/lib/queryClient';
 import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { createUser, sendPasswordResetEmail } from '@/lib/firebase';
+import { 
+  createUser, 
+  sendPasswordResetEmail, 
+  FirestoreUser,
+  getFirestoreUserById,
+  updateFirestoreUser,
+  deleteFirestoreUser,
+  usersCollection
+} from '@/lib/firebase';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { getDocs } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -56,14 +64,16 @@ import {
   Trash,
   Key,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
-// Define the user schema
+// Define o esquema do usuário
 const userSchema = z.object({
   name: z.string().min(1, { message: "Nome completo é obrigatório" }),
   email: z.string().email({ message: "Email válido é obrigatório" }),
   userType: z.enum(['admin', 'staff', 'client'], { 
     errorMap: () => ({ message: "Tipo de usuário é obrigatório" }) 
   }),
+  role: z.string().default('usuario'), // 'admin', 'usuario' ou 'cliente' (nas regras do Firestore)
   department: z.string().optional(),
   position: z.string().optional(),
   phone: z.string().optional(),
@@ -80,34 +90,31 @@ const userSchema = z.object({
   path: ["confirmPassword"],
 });
 
-type User = z.infer<typeof userSchema> & {
-  id?: number;
-  createdAt?: string;
-  avatar?: string | null;
-  firebaseUid?: string;
-  active?: boolean;
-  // role é mantido para compatibilidade com o back-end, mas userType é o que usaremos
-  role?: string; 
-};
+type UserFormData = z.infer<typeof userSchema>;
 
 export default function UsersPage() {
+  const { isAdmin } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<FirestoreUser | null>(null);
   const [showClientSelect, setShowClientSelect] = useState(false);
-  const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState<FirestoreUser[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Carregar lista de clientes para associar a usuários do tipo 'client'
   const { data: clients = [] } = useQuery<{ id: number, companyName: string }[]>({
     queryKey: ['/api/clients'],
   });
 
-  const form = useForm<User>({
+  const form = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       name: "",
       email: "",
       userType: "staff",
+      role: "usuario", // padrão de acordo com as regras do Firestore
       department: "",
       position: "",
       phone: "",
@@ -115,114 +122,59 @@ export default function UsersPage() {
       confirmPassword: "",
     },
   });
-
-  const { data: users = [], isLoading } = useQuery<User[]>({
-    queryKey: ['/api/users'],
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (user: User) => {
-      // Verificar se é um usuário válido com todos os dados necessários
-      if (!user.email || !user.name || !user.userType) {
-        throw new Error('Dados incompletos. Por favor, preencha todos os campos obrigatórios.');
-      }
+  
+  // Carregar usuários do Firestore
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const querySnapshot = await getDocs(usersCollection);
+      const usersData: FirestoreUser[] = [];
       
-      // Preparar os dados para envio
-      const dataToSend = {
-        ...user,
-        username: user.email.split('@')[0], // Geração simples de username
-        role: user.userType, // Garantir compatibilidade com backend
-      };
-      
-      // Remover campos desnecessários
-      delete dataToSend.confirmPassword;
-      
-      console.log('Enviando dados para criação de usuário:', dataToSend);
-      
-      // Enviar ao servidor
-      const res = await apiRequest('POST', '/api/users', dataToSend);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setDialogOpen(false);
-      toast({
-        title: 'Usuário criado',
-        description: 'O usuário foi criado com sucesso',
+      querySnapshot.forEach((doc) => {
+        usersData.push({ id: doc.id, ...doc.data() } as FirestoreUser);
       });
-    },
-    onError: (error: any) => {
+      
+      setUsers(usersData);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Erro ao buscar usuários:", error);
       toast({
         title: 'Erro',
-        description: `Falha ao criar usuário: ${error.message || error}`,
+        description: 'Não foi possível carregar a lista de usuários',
         variant: 'destructive',
       });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (user: User) => {
-      const dataToSend = { ...user };
-      
-      // Only send password if it's been changed
-      if (!dataToSend.password) {
-        delete dataToSend.password;
-      }
-      delete dataToSend.confirmPassword;
-      
-      const res = await apiRequest('PATCH', `/api/users/${user.id}`, dataToSend);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setDialogOpen(false);
-      toast({
-        title: 'User updated',
-        description: 'The user has been updated successfully',
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to update user: ${error}`,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/users/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setDeleteDialogOpen(false);
-      toast({
-        title: 'User deleted',
-        description: 'The user has been deleted successfully',
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to delete user: ${error}`,
-        variant: 'destructive',
-      });
-    },
-  });
+      setIsLoading(false);
+    }
+  };
+  
+  // Carregar usuários ao montar o componente
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   // Monitorar mudanças no tipo de usuário para mostrar/esconder seleção de cliente
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'userType') {
         setShowClientSelect(value.userType === 'client');
+        
+        // Definir o role com base no userType
+        if (value.userType === 'admin') {
+          form.setValue('role', 'admin');
+        } else if (value.userType === 'staff') {
+          form.setValue('role', 'usuario');
+        } else if (value.userType === 'client') {
+          form.setValue('role', 'cliente');
+        }
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch]);
+  }, [form]);
 
-  const onSubmit = async (values: User) => {
+  const onSubmit = async (values: UserFormData) => {
     try {
+      setIsSubmitting(true);
+      
       // Para clientes, verificar se há um clientId selecionado
       if (values.userType === 'client' && !values.clientId) {
         toast({
@@ -230,56 +182,43 @@ export default function UsersPage() {
           description: 'Você deve selecionar um cliente para associar a este usuário',
           variant: 'destructive',
         });
+        setIsSubmitting(false);
         return;
       }
       
-      // Criar usuário no Firebase primeiro se for um novo usuário
-      if (!selectedUser?.id) {
+      // Se estiver criando um novo usuário
+      if (!selectedUser) {
         try {
-          // Verificar no banco de dados se o email já existe
-          const response = await fetch('/api/users');
-          const existingUsers = await response.json();
-          const existingEmail = existingUsers.find(u => u.email === values.email);
-          
-          if (existingEmail) {
-            toast({
-              title: 'Email já em uso',
-              description: 'Este email já está cadastrado no sistema. Por favor, use outro email.',
-              variant: 'destructive',
-            });
-            return;
-          }
-          
-          // Integração com Firebase - criar usuário na autenticação
+          // Criar usuário no Firebase Auth e Firestore
           const firebaseUser = await createUser(
             values.email, 
             values.password || "Senha123!", // Senha padrão temporária se não fornecida
             values.name,
-            values.userType as 'admin' | 'staff' | 'client'
+            values.userType as 'admin' | 'staff' | 'client',
+            values.role, // role vem do form para compatibilidade com Firestore
+            {
+              phone: values.phone,
+              department: values.department,
+              position: values.position,
+              clientId: values.clientId,
+            }
           );
           
-          console.log("Firebase user created:", firebaseUser);
+          toast({
+            title: 'Usuário criado',
+            description: 'O usuário foi criado com sucesso',
+          });
           
-          // Adicionar o ID do Firebase e outras informações necessárias
-          const userToCreate = {
-            ...values,
-            firebaseUid: firebaseUser.uid,
-            active: true,
-            role: values.userType, // Garantir que o role seja o mesmo que userType
-            username: values.email.split('@')[0] // Username simples baseado no email
-          };
-          
-          console.log("Creating user in database:", userToCreate);
-          
-          // Salvar no banco de dados
-          createMutation.mutate(userToCreate);
+          // Recarregar a lista de usuários
+          fetchUsers();
+          setDialogOpen(false);
         } catch (error: any) {
           console.error("Erro ao criar usuário:", error);
           
           if (error.code === 'auth/email-already-in-use') {
             toast({
-              title: 'Email já em uso no Firebase',
-              description: 'Este email já está registrado no Firebase. Use outro email ou contate o administrador.',
+              title: 'Email já em uso',
+              description: 'Este email já está registrado. Use outro email ou contate o administrador.',
               variant: 'destructive',
             });
           } else {
@@ -290,16 +229,42 @@ export default function UsersPage() {
             });
           }
         }
-      } else if (selectedUser?.id) {
-        // Atualizar usuário existente
-        updateMutation.mutate({ ...values, id: selectedUser.id });
+      } else {
+        // Atualizar usuário existente no Firestore
+        try {
+          // Não enviamos a senha na atualização
+          const { password, confirmPassword, ...updateData } = values;
+          
+          await updateFirestoreUser(selectedUser.id, {
+            ...updateData,
+            updatedAt: Date.now(),
+          });
+          
+          toast({
+            title: 'Usuário atualizado',
+            description: 'O usuário foi atualizado com sucesso',
+          });
+          
+          // Recarregar a lista de usuários
+          fetchUsers();
+          setDialogOpen(false);
+        } catch (error: any) {
+          console.error("Erro ao atualizar usuário:", error);
+          toast({
+            title: 'Erro ao atualizar usuário',
+            description: error.message || 'Ocorreu um erro ao atualizar o usuário',
+            variant: 'destructive',
+          });
+        }
       }
     } catch (error: any) {
       toast({
         title: 'Erro',
-        description: `Falha ao criar usuário: ${error.message}`,
+        description: `Falha ao processar usuário: ${error.message}`,
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -309,6 +274,7 @@ export default function UsersPage() {
       name: "",
       email: "",
       userType: "staff", // Padrão para funcionários internos
+      role: "usuario", // Padrão de acordo com as regras do Firestore
       department: "",
       position: "",
       phone: "",
@@ -319,14 +285,15 @@ export default function UsersPage() {
     setDialogOpen(true);
   };
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = (user: FirestoreUser) => {
     setSelectedUser(user);
     setShowClientSelect(user.userType === 'client');
     
     form.reset({
       name: user.name,
       email: user.email,
-      userType: user.userType || 'staff',
+      userType: user.userType,
+      role: user.role,
       department: user.department || "",
       position: user.position || "",
       phone: user.phone || "",
@@ -337,13 +304,13 @@ export default function UsersPage() {
     setDialogOpen(true);
   };
 
-  const handleDeleteUser = (user: User) => {
+  const handleDeleteUser = (user: FirestoreUser) => {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
   };
 
   // Enviar convite por email para novo usuário
-  const sendInvitationEmail = (user: User) => {
+  const sendInvitationEmail = (user: FirestoreUser) => {
     // Implementar integração com Firebase para envio de convite ou redefinição de senha
     toast({
       title: 'Convite enviado',
@@ -352,7 +319,7 @@ export default function UsersPage() {
   };
 
   // Redefinir senha de um usuário existente
-  const resetPassword = async (user: User) => {
+  const resetPassword = async (user: FirestoreUser) => {
     try {
       // Implementar integração com Firebase para redefinição de senha
       await sendPasswordResetEmail(user.email);
@@ -370,21 +337,48 @@ export default function UsersPage() {
     }
   };
 
-  const confirmDelete = () => {
-    if (selectedUser?.id) {
-      deleteMutation.mutate(selectedUser.id);
+  const confirmDelete = async () => {
+    if (selectedUser) {
+      try {
+        setIsDeleting(true);
+        await deleteFirestoreUser(selectedUser.id);
+        
+        toast({
+          title: 'Usuário excluído',
+          description: 'O usuário foi excluído com sucesso',
+        });
+        
+        fetchUsers();
+        setDeleteDialogOpen(false);
+      } catch (error: any) {
+        toast({
+          title: 'Erro',
+          description: `Falha ao excluir usuário: ${error.message}`,
+          variant: 'destructive',
+        });
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
-  const columns: ColumnDef<User>[] = [
+  const columns: ColumnDef<FirestoreUser>[] = [
     {
       accessorKey: 'name',
       header: 'Nome',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-            {row.original.name.charAt(0)}
-          </div>
+          {row.original.avatar ? (
+            <img 
+              src={row.original.avatar} 
+              alt={row.original.name} 
+              className="h-8 w-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+              {row.original.name.charAt(0)}
+            </div>
+          )}
           <div>{row.original.name}</div>
         </div>
       ),
@@ -423,32 +417,61 @@ export default function UsersPage() {
       },
     },
     {
+      accessorKey: 'role',
+      header: 'Permissão',
+      cell: ({ row }) => {
+        const role = row.original.role;
+        let variant: "default" | "outline" | "secondary" = "outline";
+        let label = role || "N/A";
+        
+        switch (role) {
+          case 'admin':
+            variant = "secondary";
+            label = "Admin";
+            break;
+          case 'usuario':
+            variant = "default";
+            label = "Usuário";
+            break;
+          case 'cliente':
+            variant = "outline";
+            label = "Cliente";
+            break;
+        }
+        
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
       accessorKey: 'position',
       header: 'Cargo',
+      cell: ({ row }) => row.original.position || '-',
     },
     {
       accessorKey: 'department',
       header: 'Departamento',
+      cell: ({ row }) => row.original.department || '-',
     },
     {
+      id: 'createdAt',
       accessorKey: 'createdAt',
-      header: 'Joined',
+      header: 'Criado em',
       cell: ({ row }) => {
         return row.original.createdAt ? (
-          format(new Date(row.original.createdAt), 'MMM dd, yyyy')
+          format(new Date(row.original.createdAt), 'dd/MM/yyyy')
         ) : 'N/A';
       },
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: 'Ações',
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => handleEditUser(row.original)}
-            title="Edit"
+            title="Editar"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -457,7 +480,7 @@ export default function UsersPage() {
             variant="ghost"
             size="icon"
             onClick={() => resetPassword(row.original)}
-            title="Reset Password"
+            title="Redefinir Senha"
           >
             <Key className="h-4 w-4" />
           </Button>
@@ -466,7 +489,7 @@ export default function UsersPage() {
             variant="ghost"
             size="icon"
             onClick={() => sendInvitationEmail(row.original)}
-            title="Send Invitation"
+            title="Enviar Convite"
           >
             <Mail className="h-4 w-4" />
           </Button>
@@ -475,9 +498,9 @@ export default function UsersPage() {
             variant="ghost"
             size="icon"
             onClick={() => handleDeleteUser(row.original)}
-            title="Delete"
+            title="Excluir"
             // Permitir a exclusão de todos os usuários exceto o original admin
-            disabled={row.original.firebaseUid === 'riwAaqRuxpXBP0uT1rMO1KGBsIW2'}
+            disabled={row.original.id === 'riwAaqRuxpXBP0uT1rMO1KGBsIW2'}
           >
             <Trash className="h-4 w-4" />
           </Button>
@@ -548,49 +571,40 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex h-96 items-center justify-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={users}
-          searchKey="name"
-          searchPlaceholder="Search users..."
-          filters={[
-            {
-              key: 'userType',
-              label: 'Tipo de Usuário',
-              options: userTypeOptions.map(r => ({ label: r.label, value: r.value })),
-            },
-          ]}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <DataTable 
+          columns={columns} 
+          data={users} 
+          searchColumn="name"
+          searchPlaceholder="Buscar por nome..."
+          isLoading={isLoading}
         />
-      )}
-
-      {/* User Dialog */}
+      </div>
+      
+      {/* Diálogo para adicionar/editar usuário */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{selectedUser ? 'Edit User' : 'Invite New User'}</DialogTitle>
+            <DialogTitle>
+              {selectedUser ? 'Editar Usuário' : 'Adicionar Novo Usuário'}
+            </DialogTitle>
             <DialogDescription>
               {selectedUser 
-                ? 'Update user information and permissions'
-                : 'Add a new user to the system'}
+                ? 'Edite os detalhes do usuário abaixo.'
+                : 'Preencha os detalhes para criar um novo usuário.'}
             </DialogDescription>
           </DialogHeader>
-
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>Nome Completo</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input placeholder="Nome completo" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -605,54 +619,71 @@ export default function UsersPage() {
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="user@example.com" 
-                          type="email"
+                          placeholder="email@exemplo.com" 
                           {...field} 
+                          disabled={!!selectedUser} // Email não pode ser alterado em usuários existentes
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+                
                 <FormField
                   control={form.control}
                   name="userType"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo de Usuário</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          setShowClientSelect(value === 'client');
-                        }}
+                      <Select 
+                        onValueChange={field.onChange} 
                         defaultValue={field.value}
-                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo de usuário" />
+                            <SelectValue placeholder="Selecione um tipo" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {userTypeOptions.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
+                          {userTypeOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        Determina quais permissões o usuário terá no sistema
-                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Permissão (Firestore)</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma permissão" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="usuario">Usuário</SelectItem>
+                          <SelectItem value="cliente">Cliente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Permissão usada nas regras do Firestore</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Mostra seleção de cliente apenas para usuários do tipo cliente */}
                 {showClientSelect && (
                   <FormField
                     control={form.control}
@@ -660,18 +691,17 @@ export default function UsersPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Cliente Associado</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(Number(value))}
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value, 10))}
                           defaultValue={field.value?.toString()}
-                          value={field.value?.toString()}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione o cliente" />
+                              <SelectValue placeholder="Selecione um cliente" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {clients.map((client) => (
+                            {clients.map(client => (
                               <SelectItem key={client.id} value={client.id.toString()}>
                                 {client.companyName}
                               </SelectItem>
@@ -679,7 +709,7 @@ export default function UsersPage() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Cliente ao qual este usuário está vinculado
+                          Selecione o cliente para associar a este usuário
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -687,132 +717,113 @@ export default function UsersPage() {
                   />
                 )}
 
-                {!showClientSelect && (
-                  <FormField
-                    control={form.control}
-                    name="position"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cargo</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Gerente de Projetos" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Departamento</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Departamento" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cargo</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Cargo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(00) 00000-0000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {!selectedUser && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Senha</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="********" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Deixe em branco para gerar uma senha aleatória
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirmar Senha</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="********" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
                 )}
               </div>
-
-              {!selectedUser && (
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="••••••••" 
-                            type="password"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="••••••••" 
-                            type="password"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
-              {selectedUser && (
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password (optional)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Leave blank to keep current" 
-                            type="password"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Leave blank to keep current" 
-                            type="password"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
+              
               <DialogFooter>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {createMutation.isPending || updateMutation.isPending
-                    ? 'Saving...'
-                    : selectedUser ? 'Update User' : 'Create User'}
+                <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? 'Salvando...'
+                    : selectedUser ? 'Atualizar Usuário' : 'Criar Usuário'}
                 </Button>
               </DialogFooter>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation Dialog */}
+      
+      {/* Diálogo de confirmação para excluir usuário */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the user account for {selectedUser?.name}. 
-              This action cannot be undone.
+              Esta ação não pode ser desfeita. Isto excluirá permanentemente o usuário 
+              "{selectedUser?.name}" e removerá seus dados do sistema.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Excluindo...' : 'Excluir Usuário'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
