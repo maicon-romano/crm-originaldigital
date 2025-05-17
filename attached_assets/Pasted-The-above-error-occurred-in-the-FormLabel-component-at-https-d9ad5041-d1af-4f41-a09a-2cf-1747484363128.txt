@@ -1,0 +1,37 @@
+The above error occurred in the <FormLabel> component:
+
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/ui/form.tsx:96:6
+    at div
+    at div
+    at div
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=2f4113b7:42:13
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SD42OOGP.js?v=2f4113b7:61:7
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=2f4113b7:79:13
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=2f4113b7:56:13
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=2f4113b7:42:13
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-CGFEZ6O5.js?v=2f4113b7:34:5
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SRSLCZ46.js?v=2f4113b7:233:13
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SRSLCZ46.js?v=2f4113b7:156:58
+    at Presence (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WIIJQEXM.js?v=2f4113b7:24:11)
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SRSLCZ46.js?v=2f4113b7:147:64
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=2f4113b7:79:13
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=2f4113b7:56:13
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=2f4113b7:42:13
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SD42OOGP.js?v=2f4113b7:260:22
+    at Presence (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WIIJQEXM.js?v=2f4113b7:24:11)
+    at Provider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=2f4113b7:38:15)
+    at DialogPortal (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SRSLCZ46.js?v=2f4113b7:109:11)
+    at _c3 (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=2f4113b7:38:15)
+    at Dialog (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SRSLCZ46.js?v=2f4113b7:50:5)
+    at div
+    at Login (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/pages/login.tsx?t=1747484117621:74:45)
+    at Route (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2f4113b7:323:16)
+    at Switch (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2f4113b7:379:17)
+    at Router
+    at Provider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=2f4113b7:38:15)
+    at TooltipProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=2f4113b7:61:5)
+    at AuthProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/hooks/use-auth.tsx:39:32)
+    at QueryClientProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2f4113b7:2805:3)
+    at ThemeProvider…
+Cannot destructure property 'getFieldState' of 'useFormContext(...)' as it is null.

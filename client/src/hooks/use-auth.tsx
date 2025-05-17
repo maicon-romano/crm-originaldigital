@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth, loginWithEmailAndPassword, logoutUser } from '../lib/firebase';
+import { auth, loginWithEmailAndPassword, logoutUser, ADMIN_UID } from '../lib/firebase';
 
 interface User {
   id: string;
@@ -16,9 +16,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
-
-// O ID definido para o usuário admin
-const ADMIN_UID = 'riwAaqRuxpXBP0uT1rMO1KGBsIW2';
 
 // Converter usuário do Firebase para nosso modelo de usuário
 const mapFirebaseUserToUser = (firebaseUser: FirebaseUser): User => {
