@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // USUÁRIOS (admin ou usuário da agência)
+    match /usuarios/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // CLIENTES
+    match /clientes/{clientId} {
+      allow read, write: if request.auth != null && request.auth.uid == clientId;
+    }
+
+    // TAREFAS
+    match /tarefas/{tarefaId} {
+      allow read, write: if isAdmin() || isUsuario();
+      allow read: if isCliente() && resource.data.cliente_id == request.auth.uid;
+    }
+
+    // PROJETOS
+    match /projetos/{projetoId} {
+      allow read, write: if isAdmin();
+      allow read: if isUsuario();
+      allow read: if isCliente() && resource.data.cliente_id == request.auth.uid;
+    }
+
+    // FATURAS
+    match /faturas/{faturaId} {
+      allow read, write: if isAdmin();
+      allow read: if isCliente() && resource.data.cliente_id == request.auth.uid;
+    }
+
+    // PROPOSTAS
+    match /propostas/{propostaId} {
+      allow read, write: if isAdmin();
+    }
+
+    // CONTRATOS
+    match /contratos/{contratoId} {
+      allow read, write: if isAdmin();
+      allow read: if isCliente() && resource.data.cliente_id == request.auth.uid;
+    }
+
+    // TICKETS DE SUPORTE
+    match /tickets/{ticketId} {
+      allow read, write: if isAdmin() || isUsuario();
+      allow read, write: if isCliente() && resource.data.cliente_id == request.auth.uid;
+    }
+
+    // FUNÇÕES DE VERIFICAÇÃO DE PAPEL
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin";
+    }
+
+    function isUsuario() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "usuario";
+    }
+
+    function isCliente() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data.role == "cliente";
+    }
+  }
+}

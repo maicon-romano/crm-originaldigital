@@ -1,11 +1,14 @@
 import { pgTable, text, serial, integer, boolean, timestamp, date, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { jsonb } from "drizzle-orm/pg-core/columns";
 
 // User Model
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  firebaseUid: text("firebase_uid").unique(), // ID do Firebase Authentication
+  firebaseUid: text("firebase_uid").unique(), // ID do Firebase Authentication (opcional para compatibilidade)
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(), // Senha do usuário (hash)
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   phone: text("phone"),
@@ -246,3 +249,10 @@ export const insertCompanySettingsSchema = createInsertSchema(companySettings).o
 });
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
 export type CompanySettings = typeof companySettings.$inferSelect;
+
+// Sessions para autenticação
+export const sessions = pgTable("sessions", {
+  sid: text("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});

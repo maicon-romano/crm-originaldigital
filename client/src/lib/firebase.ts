@@ -9,6 +9,17 @@ import {
   updateProfile,
   sendPasswordResetEmail as firebaseSendPasswordReset
 } from "firebase/auth";
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  query, 
+  where, 
+  getDocs 
+} from "firebase/firestore";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -24,6 +35,7 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 
 // O ID definido para o usuário admin
 export const ADMIN_UID = 'riwAaqRuxpXBP0uT1rMO1KGBsIW2';
@@ -31,9 +43,22 @@ export const ADMIN_UID = 'riwAaqRuxpXBP0uT1rMO1KGBsIW2';
 // Tipos de usuário para o sistema
 export type UserType = 'admin' | 'staff' | 'client';
 
-// Interface para usuário com tipo
-export interface UserWithType extends FirebaseUser {
-  userType?: UserType;
+// Interface para usuário com tipo (baseado nas regras do Firestore enviadas)
+export interface FirestoreUser {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  phone?: string;
+  userType: UserType;
+  role: string;         // Permissão: 'admin' ou 'usuario' ou 'cliente' (das regras do Firestore)
+  department?: string;
+  position?: string;
+  avatar?: string;
+  clientId?: number;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Monitorar estado de autenticação
