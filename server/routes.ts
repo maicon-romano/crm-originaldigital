@@ -19,7 +19,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const users = await getAllFirestoreUsers();
       res.json(users);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao obter usuários:", error);
       res.status(500).json({ message: "Erro ao obter usuários", error: error.message });
     }
@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(user);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao obter usuário:", error);
       res.status(500).json({ message: "Erro ao obter usuário", error: error.message });
     }
@@ -70,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.status(201).json(newUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao criar usuário:", error);
       res.status(500).json({ message: "Erro ao criar usuário", error: error.message });
     }
@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Atualizar o usuário
       const updatedUser = await updateFirestoreUser(id, updates);
       res.json(updatedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar usuário:", error);
       res.status(500).json({ message: "Erro ao atualizar usuário", error: error.message });
     }
@@ -114,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Excluir o usuário
       await deleteFirestoreUser(id);
       res.status(204).send();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao excluir usuário:", error);
       res.status(500).json({ message: "Erro ao excluir usuário", error: error.message });
     }

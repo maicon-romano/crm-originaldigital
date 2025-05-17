@@ -52,7 +52,7 @@ export interface FirestoreUser {
   email: string;
   phone?: string;
   userType: UserType;
-  role: string;         // Permissão: 'admin' ou 'usuario' ou 'cliente' (das regras do Firestore)
+  role: 'admin' | 'usuario' | 'cliente';  // Permissão: 'admin' ou 'usuario' ou 'cliente' (das regras do Firestore)
   department?: string;
   position?: string;
   avatar?: string;

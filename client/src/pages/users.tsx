@@ -287,7 +287,7 @@ export default function UsersPage() {
     form.reset({
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: user.role as 'admin' | 'usuario' | 'cliente',
       cargo: user.position || "",
       phone: user.phone || "",
       clientId: user.clientId,
