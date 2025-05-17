@@ -1,6 +1,13 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth, loginWithEmailAndPassword, logoutUser, ADMIN_UID } from '../lib/firebase';
+import { 
+  auth, 
+  loginWithEmailAndPassword, 
+  logoutUser, 
+  ADMIN_UID,
+  getFirestoreUserById,
+  FirestoreUser
+} from '../lib/firebase';
 
 interface User {
   id: string;
@@ -22,20 +29,33 @@ interface AuthContextType {
   isClient: boolean;
 }
 
-// Converter usuário do Firebase para nosso modelo de usuário
-const mapFirebaseUserToUser = (firebaseUser: FirebaseUser): User => {
-  const isAdmin = firebaseUser.uid === ADMIN_UID;
+// Converter usuário do Firebase + Firestore para nosso modelo de usuário
+const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> => {
+  // Buscar informações adicionais do usuário no Firestore
+  const firestoreUser = await getFirestoreUserById(firebaseUser.uid);
   
-  // Por padrão, se o usuário for o admin específico, atribuímos o tipo admin
-  // Caso contrário, assumimos como staff (equipe interna)
-  const userType = isAdmin ? 'admin' : 'staff';
+  if (firestoreUser) {
+    // Se encontrou o usuário no Firestore, use essas informações
+    return {
+      id: firestoreUser.id,
+      name: firestoreUser.name,
+      email: firestoreUser.email,
+      role: firestoreUser.role,
+      userType: firestoreUser.userType,
+      clientId: firestoreUser.clientId
+    };
+  }
+  
+  // Caso não encontre no Firestore (caso de usuário novo), use informações do Firebase
+  // Definindo valores padrão mais seguros
+  const isMainAdmin = firebaseUser.uid === ADMIN_UID;
   
   return {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
     email: firebaseUser.email,
-    role: isAdmin ? 'admin' : 'staff',
-    userType: userType,
+    role: isMainAdmin ? 'admin' : 'usuario',
+    userType: isMainAdmin ? 'admin' : 'staff',
   };
 };
 
@@ -56,15 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Monitorar o estado de autenticação do Firebase
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const mappedUser = mapFirebaseUserToUser(firebaseUser);
-        setUser(mappedUser);
-        
-        // Aqui seria o lugar para consultar o banco de dados para obter detalhes adicionais do usuário
-        // como tipo de usuário (admin, staff, client) e clientId (se aplicável)
-        
-        console.log("Usuário autenticado:", mappedUser);
+        try {
+          // Mapear o usuário do Firebase + Firestore para nosso modelo
+          const mappedUser = await mapFirebaseUserToUser(firebaseUser);
+          setUser(mappedUser);
+          
+          console.log("Usuário autenticado:", mappedUser);
+        } catch (error) {
+          console.error("Erro ao obter dados do usuário do Firestore:", error);
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -79,7 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const firebaseUser = await loginWithEmailAndPassword(email, password);
-      return !!firebaseUser;
+      
+      if (firebaseUser) {
+        // Não precisamos definir o usuário aqui, pois o onAuthStateChanged será disparado
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('Falha no login:', error);
       return false;
@@ -98,10 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user;
   
   // Verificadores de tipo de usuário
-  // Considera admin tanto o usuário específico (ADMIN_UID) quanto qualquer usuário com userType 'admin'
+  // Considera admin tanto o usuário específico (ADMIN_UID) quanto qualquer usuário com userType 'admin' ou role 'admin'
   const isAdmin = user?.id === ADMIN_UID || user?.userType === 'admin' || user?.role === 'admin';
-  const isStaff = user?.userType === 'staff' || user?.role === 'staff';
-  const isClient = user?.userType === 'client' || user?.role === 'client';
+  const isStaff = user?.userType === 'staff' || user?.role === 'usuario'; // 'usuario' é o equivalente a 'staff' nas regras
+  const isClient = user?.userType === 'client' || user?.role === 'cliente'; // 'cliente' é o equivalente a 'client' nas regras
   
   return (
     <AuthContext.Provider value={{ 

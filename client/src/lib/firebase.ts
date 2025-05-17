@@ -18,7 +18,8 @@ import {
   updateDoc, 
   query, 
   where, 
-  getDocs 
+  getDocs,
+  deleteDoc
 } from "firebase/firestore";
 
 // Firebase configuration
@@ -57,9 +58,12 @@ export interface FirestoreUser {
   avatar?: string;
   clientId?: number;
   active: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: number;     // Timestamp para compatibilidade com Firestore
+  updatedAt: number;     // Timestamp para compatibilidade com Firestore
 }
+
+// Referência à coleção 'usuarios' no Firestore
+export const usersCollection = collection(db, 'usuarios');
 
 // Monitorar estado de autenticação
 onAuthStateChanged(auth, (user) => {
@@ -70,28 +74,22 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Criar um novo usuário sem fazer login no usuário recém-criado
+// ======== FUNÇÕES PARA GERENCIAR USUÁRIOS NO FIRESTORE ========
+
+// Criar um novo usuário usando Firebase Auth e salvar no Firestore
 export const createUser = async (
   email: string, 
   password: string, 
   displayName: string,
-  userType: UserType = 'staff'
-): Promise<FirebaseUser> => {
+  userType: UserType = 'staff',
+  role: string = 'usuario', // role padrão no Firestore
+  extraData: Partial<FirestoreUser> = {}
+): Promise<FirestoreUser> => {
   try {
     console.log(`Criando novo usuário do tipo ${userType}: ${email}`);
     
     // Salvar usuário atual
     const currentUser = auth.currentUser;
-    let currentUserToken = null;
-    
-    if (currentUser) {
-      // Obter token atual para reautenticar sem deslogar
-      try {
-        currentUserToken = await currentUser.getIdToken();
-      } catch (e) {
-        console.warn("Não foi possível obter token do usuário atual:", e);
-      }
-    }
     
     // Criar um app temporário para criar o usuário sem deslogar o atual
     const tempApp = initializeApp(firebaseConfig, 'tempApp-' + new Date().getTime());
@@ -105,28 +103,107 @@ export const createUser = async (
       displayName: displayName
     });
     
-    // Guardar a referência do usuário criado
-    // Precisamos copiar as propriedades pois o objeto será invalidado quando deletarmos o app
-    const newUser = {
-      uid: userCredential.user.uid,
-      email: userCredential.user.email,
-      displayName: userCredential.user.displayName,
-      emailVerified: userCredential.user.emailVerified,
-      metadata: userCredential.user.metadata,
-      isAnonymous: userCredential.user.isAnonymous,
-      providerId: 'firebase',
-      photoURL: userCredential.user.photoURL,
-      phoneNumber: userCredential.user.phoneNumber,
+    // Criar o usuário no Firestore
+    const timestamp = Date.now();
+    const firestoreUser: FirestoreUser = {
+      id: userCredential.user.uid,
+      username: email.split('@')[0],
+      name: displayName,
+      email: email,
+      userType: userType,
+      role: role,
+      active: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      ...extraData
     };
     
-    console.log("Usuário criado com ID:", newUser.uid);
+    // Salvar no Firestore
+    await setDoc(doc(usersCollection, firestoreUser.id), firestoreUser);
+    
+    console.log("Usuário criado e salvo no Firestore com ID:", firestoreUser.id);
     
     // Deslogar do app temporário e limpar recursos
     await signOut(tempAuth);
     
-    return newUser as FirebaseUser;
+    return firestoreUser;
   } catch (error: any) {
     console.error("Erro ao criar usuário:", error);
+    throw error;
+  }
+};
+
+// Buscar um usuário pelo ID do Firebase no Firestore
+export const getFirestoreUserById = async (userId: string): Promise<FirestoreUser | null> => {
+  try {
+    const userDoc = await getDoc(doc(usersCollection, userId));
+    
+    if (userDoc.exists()) {
+      return userDoc.data() as FirestoreUser;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Erro ao buscar usuário:", error);
+    throw error;
+  }
+};
+
+// Buscar um usuário pelo e-mail no Firestore
+export const getFirestoreUserByEmail = async (email: string): Promise<FirestoreUser | null> => {
+  try {
+    const q = query(usersCollection, where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      return querySnapshot.docs[0].data() as FirestoreUser;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Erro ao buscar usuário por e-mail:", error);
+    throw error;
+  }
+};
+
+// Atualizar um usuário no Firestore
+export const updateFirestoreUser = async (
+  userId: string, 
+  userData: Partial<FirestoreUser>
+): Promise<FirestoreUser | null> => {
+  try {
+    const userRef = doc(usersCollection, userId);
+    
+    // Verificar se o usuário existe
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) {
+      console.error("Usuário não encontrado:", userId);
+      return null;
+    }
+    
+    const updateData = {
+      ...userData,
+      updatedAt: Date.now()
+    };
+    
+    await updateDoc(userRef, updateData);
+    
+    // Buscar o usuário atualizado
+    const updatedUserDoc = await getDoc(userRef);
+    return updatedUserDoc.data() as FirestoreUser;
+  } catch (error) {
+    console.error("Erro ao atualizar usuário:", error);
+    throw error;
+  }
+};
+
+// Excluir um usuário do Firestore
+export const deleteFirestoreUser = async (userId: string): Promise<boolean> => {
+  try {
+    await deleteDoc(doc(usersCollection, userId));
+    return true;
+  } catch (error) {
+    console.error("Erro ao excluir usuário:", error);
     throw error;
   }
 };
@@ -142,7 +219,7 @@ export const sendPasswordResetEmail = async (email: string): Promise<void> => {
   }
 };
 
-// Funções de autenticação Firebase
+// Login com email e senha - verifica no Firebase Auth e depois no Firestore
 export const loginWithEmailAndPassword = async (email: string, password: string): Promise<FirebaseUser> => {
   try {
     console.log("Tentando login com email:", email);
@@ -175,11 +252,33 @@ export const loginWithEmailAndPassword = async (email: string, password: string)
         }),
         reload: async () => Promise.resolve(),
         toJSON: () => ({})
-      } as FirebaseUser;
+      } as unknown as FirebaseUser;
     }
     
+    // Fazer login usando Firebase Authentication
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log("Login realizado com sucesso:", userCredential.user.uid);
+    
+    // Verificar se o usuário existe no Firestore
+    const firestoreUser = await getFirestoreUserById(userCredential.user.uid);
+    
+    if (!firestoreUser) {
+      console.log("Usuário não encontrado no Firestore, criando registro...");
+      
+      // Criar um usuário no Firestore se não existir
+      await setDoc(doc(usersCollection, userCredential.user.uid), {
+        id: userCredential.user.uid,
+        username: email.split('@')[0],
+        name: userCredential.user.displayName || email.split('@')[0],
+        email: email,
+        userType: userCredential.user.uid === ADMIN_UID ? 'admin' : 'staff',
+        role: userCredential.user.uid === ADMIN_UID ? 'admin' : 'usuario',
+        active: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
+    
     return userCredential.user;
   } catch (error: any) {
     console.error("Erro no login com email e senha:", error);
