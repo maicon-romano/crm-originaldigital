@@ -21,6 +21,13 @@ import {
   Shield,
 } from "lucide-react";
 
+interface NavLink {
+  href: string;
+  icon: React.ReactNode;
+  text: string;
+  adminOnly?: boolean;
+}
+
 interface SidebarLinkProps {
   href: string;
   icon: React.ReactNode;
@@ -89,55 +96,64 @@ export function Sidebar() {
     setMobileMenuOpen(false);
   };
 
-  const mainLinks = [
+  const mainLinks: NavLink[] = [
     {
       href: '/dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
-      text: 'Dashboard'
+      text: 'Dashboard',
+      adminOnly: false
     },
     {
       href: '/clients',
       icon: <Users className="h-5 w-5" />,
-      text: 'Clientes'
+      text: 'Clientes',
+      adminOnly: false
     },
     {
       href: '/projects',
       icon: <FolderKanban className="h-5 w-5" />,
-      text: 'Projetos'
+      text: 'Projetos',
+      adminOnly: false
     },
     {
       href: '/tasks',
       icon: <CheckSquare className="h-5 w-5" />,
-      text: 'Tarefas'
+      text: 'Tarefas',
+      adminOnly: false
     },
     {
       href: '/proposals',
       icon: <FileText className="h-5 w-5" />,
-      text: 'Propostas'
+      text: 'Propostas',
+      adminOnly: false
     },
     {
       href: '/invoices',
       icon: <File className="h-5 w-5" />,
-      text: 'Faturas'
+      text: 'Faturas',
+      adminOnly: false
     },
     {
       href: '/expenses',
       icon: <BanknoteIcon className="h-5 w-5" />,
-      text: 'Despesas'
+      text: 'Despesas',
+      adminOnly: false
     },
     {
       href: '/support',
       icon: <Headphones className="h-5 w-5" />,
-      text: 'Suporte'
+      text: 'Suporte',
+      adminOnly: false
     },
     {
       href: '/calendar',
       icon: <Calendar className="h-5 w-5" />,
-      text: 'Calendário'
+      text: 'Calendário',
+      adminOnly: false
     }
   ];
 
-  const secondaryLinks = [
+  const secondaryLinks: NavLink[] = [
     {
       href: '/users',
       icon: <User className="h-5 w-5" />,
