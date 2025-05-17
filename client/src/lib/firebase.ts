@@ -55,16 +55,25 @@ export const createUser = async (
   try {
     console.log(`Criando novo usuário do tipo ${userType}: ${email}`);
     
-    // Armazenar o usuário atual
+    // Salvar usuário atual
     const currentUser = auth.currentUser;
+    let currentUserToken = null;
     
-    // Deslogar temporariamente para criar o novo usuário
     if (currentUser) {
-      await signOut(auth);
+      // Obter token atual para reautenticar sem deslogar
+      try {
+        currentUserToken = await currentUser.getIdToken();
+      } catch (e) {
+        console.warn("Não foi possível obter token do usuário atual:", e);
+      }
     }
     
-    // Criar o usuário
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    // Criar um app temporário para criar o usuário sem deslogar o atual
+    const tempApp = initializeApp(firebaseConfig, 'tempApp-' + new Date().getTime());
+    const tempAuth = getAuth(tempApp);
+    
+    // Criar o usuário no app temporário
+    const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
     
     // Atualizar o perfil com o nome fornecido
     await updateProfile(userCredential.user, {
@@ -72,23 +81,25 @@ export const createUser = async (
     });
     
     // Guardar a referência do usuário criado
-    const newUser = userCredential.user;
+    // Precisamos copiar as propriedades pois o objeto será invalidado quando deletarmos o app
+    const newUser = {
+      uid: userCredential.user.uid,
+      email: userCredential.user.email,
+      displayName: userCredential.user.displayName,
+      emailVerified: userCredential.user.emailVerified,
+      metadata: userCredential.user.metadata,
+      isAnonymous: userCredential.user.isAnonymous,
+      providerId: 'firebase',
+      photoURL: userCredential.user.photoURL,
+      phoneNumber: userCredential.user.phoneNumber,
+    };
     
     console.log("Usuário criado com ID:", newUser.uid);
     
-    // Deslogar o usuário recém-criado
-    await signOut(auth);
+    // Deslogar do app temporário e limpar recursos
+    await signOut(tempAuth);
     
-    // Se havia um usuário logado antes, fazer login novamente
-    if (currentUser) {
-      // Precisamos refazer o login do usuário original
-      // Mas como não temos a senha, usaremos a credencial de teste para demonstração
-      if (currentUser.uid === ADMIN_UID) {
-        await loginWithEmailAndPassword('admin@example.com', 'senha123');
-      }
-    }
-    
-    return newUser;
+    return newUser as FirebaseUser;
   } catch (error: any) {
     console.error("Erro ao criar usuário:", error);
     throw error;

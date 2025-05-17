@@ -98,9 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user;
   
   // Verificadores de tipo de usuário
-  const isAdmin = user?.userType === 'admin' || user?.role === 'admin';
-  const isStaff = user?.userType === 'staff';
-  const isClient = user?.userType === 'client';
+  // Considera admin tanto o usuário específico (ADMIN_UID) quanto qualquer usuário com userType 'admin'
+  const isAdmin = user?.id === ADMIN_UID || user?.userType === 'admin' || user?.role === 'admin';
+  const isStaff = user?.userType === 'staff' || user?.role === 'staff';
+  const isClient = user?.userType === 'client' || user?.role === 'client';
   
   return (
     <AuthContext.Provider value={{ 
