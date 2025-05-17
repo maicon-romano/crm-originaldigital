@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { createUser, sendPasswordResetEmail } from '@/lib/firebase';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -222,15 +223,39 @@ export default function UsersPage() {
       
       // Criar usuário no Firebase primeiro se for um novo usuário
       if (!selectedUser?.id) {
-        // Integração com Firebase - criar usuário na autenticação
-        // await createUser(values.email, values.password, values.name, values.userType);
-        console.log("Usuário criado no Firebase:", values);
-      }
-
-      if (selectedUser?.id) {
+        try {
+          // Integração com Firebase - criar usuário na autenticação
+          const firebaseUser = await createUser(
+            values.email, 
+            values.password || "Senha123!", // Senha padrão temporária se não fornecida
+            values.name,
+            values.userType as 'admin' | 'staff' | 'client'
+          );
+          
+          // Adicionar o ID do Firebase ao usuário
+          const userWithFirebaseData = {
+            ...values,
+            firebaseUid: firebaseUser.uid,
+            active: true
+          };
+          
+          // Salvar no banco de dados
+          createMutation.mutate(userWithFirebaseData);
+          
+        } catch (error: any) {
+          if (error.code === 'auth/email-already-in-use') {
+            toast({
+              title: 'Email já em uso',
+              description: 'Este email já está associado a um usuário. Use outro email.',
+              variant: 'destructive',
+            });
+          } else {
+            throw error;
+          }
+        }
+      } else if (selectedUser?.id) {
+        // Atualizar usuário existente
         updateMutation.mutate({ ...values, id: selectedUser.id });
-      } else {
-        createMutation.mutate(values);
       }
     } catch (error: any) {
       toast({
@@ -293,7 +318,7 @@ export default function UsersPage() {
   const resetPassword = async (user: User) => {
     try {
       // Implementar integração com Firebase para redefinição de senha
-      // await sendPasswordResetEmail(user.email);
+      await sendPasswordResetEmail(user.email);
       
       toast({
         title: 'Redefinição de senha',
@@ -423,24 +448,23 @@ export default function UsersPage() {
     },
   ];
 
-  const roleOptions = [
-    { value: 'admin', label: 'Administrator' },
-    { value: 'manager', label: 'Manager' },
-    { value: 'user', label: 'User' },
-    { value: 'client', label: 'Client' },
+  const userTypeOptions = [
+    { value: 'admin', label: 'Administrador' },
+    { value: 'staff', label: 'Funcionário' },
+    { value: 'client', label: 'Cliente' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Users</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Usuários</h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Manage system users and access permissions
+            Gerenciar usuários do sistema e permissões de acesso
           </p>
         </div>
         <Button onClick={handleOpenDialog}>
-          <UserPlus className="mr-2 h-4 w-4" /> Invite User
+          <UserPlus className="mr-2 h-4 w-4" /> Adicionar Usuário
         </Button>
       </div>
 
@@ -448,7 +472,7 @@ export default function UsersPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-blue-500">
           <div className="flex justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total de Usuários</h3>
               <p className="text-2xl font-bold">{users.length}</p>
             </div>
             <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-3 text-blue-500 dark:text-blue-400">
@@ -460,9 +484,9 @@ export default function UsersPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-green-500">
           <div className="flex justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Users</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Funcionários</h3>
               <p className="text-2xl font-bold">
-                {users.filter(u => u.role !== 'client').length}
+                {users.filter(u => u.userType === 'staff').length}
               </p>
             </div>
             <div className="bg-green-100 dark:bg-green-900 rounded-full p-3 text-green-500 dark:text-green-400">
@@ -474,13 +498,13 @@ export default function UsersPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-purple-500">
           <div className="flex justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Administrators</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Clientes</h3>
               <p className="text-2xl font-bold">
-                {users.filter(u => u.role === 'admin').length}
+                {users.filter(u => u.userType === 'client').length}
               </p>
             </div>
             <div className="bg-purple-100 dark:bg-purple-900 rounded-full p-3 text-purple-500 dark:text-purple-400">
-              <Key className="h-6 w-6" />
+              <UsersIcon className="h-6 w-6" />
             </div>
           </div>
         </div>
@@ -498,9 +522,9 @@ export default function UsersPage() {
           searchPlaceholder="Search users..."
           filters={[
             {
-              key: 'role',
-              label: 'Role',
-              options: roleOptions.map(r => ({ label: r.label, value: r.value })),
+              key: 'userType',
+              label: 'Tipo de Usuário',
+              options: userTypeOptions.map(r => ({ label: r.label, value: r.value })),
             },
           ]}
         />
@@ -557,49 +581,89 @@ export default function UsersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="role"
+                  name="userType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Role</FormLabel>
+                      <FormLabel>Tipo de Usuário</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setShowClientSelect(value === 'client');
+                        }}
                         defaultValue={field.value}
                         value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
+                            <SelectValue placeholder="Selecione o tipo de usuário" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {roleOptions.map((role) => (
-                            <SelectItem key={role.value} value={role.value}>
-                              {role.label}
+                          {userTypeOptions.map((type) => (
+                            <SelectItem key={type.value} value={type.value}>
+                              {type.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Determines what permissions the user has
+                        Determina quais permissões o usuário terá no sistema
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="position"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Position</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Project Manager" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Mostra seleção de cliente apenas para usuários do tipo cliente */}
+                {showClientSelect && (
+                  <FormField
+                    control={form.control}
+                    name="clientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cliente Associado</FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(Number(value))}
+                          defaultValue={field.value?.toString()}
+                          value={field.value?.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o cliente" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id.toString()}>
+                                {client.companyName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Cliente ao qual este usuário está vinculado
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {!showClientSelect && (
+                  <FormField
+                    control={form.control}
+                    name="position"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cargo</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Gerente de Projetos" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {!selectedUser && (
