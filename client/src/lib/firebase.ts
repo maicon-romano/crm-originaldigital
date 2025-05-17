@@ -105,7 +105,9 @@ export const createUser = async (
     
     // Criar o usuário no Firestore
     const timestamp = Date.now();
-    const firestoreUser: FirestoreUser = {
+    
+    // Preparar dados básicos do usuário
+    const userData: Record<string, any> = {
       id: userCredential.user.uid,
       username: email.split('@')[0],
       name: displayName,
@@ -114,19 +116,27 @@ export const createUser = async (
       role: role,
       active: true,
       createdAt: timestamp,
-      updatedAt: timestamp,
-      ...extraData
+      updatedAt: timestamp
     };
     
-    // Salvar no Firestore
-    await setDoc(doc(usersCollection, firestoreUser.id), firestoreUser);
+    // Adicionar campos extras apenas se tiverem valores definidos
+    if (extraData) {
+      Object.entries(extraData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          userData[key] = value;
+        }
+      });
+    }
     
-    console.log("Usuário criado e salvo no Firestore com ID:", firestoreUser.id);
+    // Salvar no Firestore com campos limpos
+    await setDoc(doc(usersCollection, userData.id), userData);
+    
+    console.log("Usuário criado e salvo no Firestore com ID:", userData.id);
     
     // Deslogar do app temporário e limpar recursos
     await signOut(tempAuth);
     
-    return firestoreUser;
+    return userData as FirestoreUser;
   } catch (error: any) {
     console.error("Erro ao criar usuário:", error);
     throw error;

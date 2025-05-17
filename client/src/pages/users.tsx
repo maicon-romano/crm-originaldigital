@@ -53,7 +53,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Plus,
@@ -63,6 +62,7 @@ import {
   Edit,
   Trash,
   Key,
+  Search
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -70,12 +70,10 @@ import { useAuth } from '@/hooks/use-auth';
 const userSchema = z.object({
   name: z.string().min(1, { message: "Nome completo é obrigatório" }),
   email: z.string().email({ message: "Email válido é obrigatório" }),
-  userType: z.enum(['admin', 'staff', 'client'], { 
-    errorMap: () => ({ message: "Tipo de usuário é obrigatório" }) 
+  role: z.enum(['admin', 'usuario', 'cliente'], { 
+    errorMap: () => ({ message: "Permissão é obrigatória" }) 
   }),
-  role: z.string().default('usuario'), // 'admin', 'usuario' ou 'cliente' (nas regras do Firestore)
-  department: z.string().optional(),
-  position: z.string().optional(),
+  cargo: z.string().optional(),
   phone: z.string().optional(),
   clientId: z.number().optional(),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }).optional().or(z.literal('')),
@@ -100,6 +98,7 @@ export default function UsersPage() {
   const [showClientSelect, setShowClientSelect] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<FirestoreUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -113,10 +112,8 @@ export default function UsersPage() {
     defaultValues: {
       name: "",
       email: "",
-      userType: "staff",
-      role: "usuario", // padrão de acordo com as regras do Firestore
-      department: "",
-      position: "",
+      role: "usuario",
+      cargo: "",
       phone: "",
       password: "",
       confirmPassword: "",
@@ -155,17 +152,8 @@ export default function UsersPage() {
   // Monitorar mudanças no tipo de usuário para mostrar/esconder seleção de cliente
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
-      if (name === 'userType') {
-        setShowClientSelect(value.userType === 'client');
-        
-        // Definir o role com base no userType
-        if (value.userType === 'admin') {
-          form.setValue('role', 'admin');
-        } else if (value.userType === 'staff') {
-          form.setValue('role', 'usuario');
-        } else if (value.userType === 'client') {
-          form.setValue('role', 'cliente');
-        }
+      if (name === 'role') {
+        setShowClientSelect(value.role === 'cliente');
       }
     });
     return () => subscription.unsubscribe();
@@ -176,7 +164,7 @@ export default function UsersPage() {
       setIsSubmitting(true);
       
       // Para clientes, verificar se há um clientId selecionado
-      if (values.userType === 'client' && !values.clientId) {
+      if (values.role === 'cliente' && !values.clientId) {
         toast({
           title: 'Erro',
           description: 'Você deve selecionar um cliente para associar a este usuário',
@@ -186,6 +174,10 @@ export default function UsersPage() {
         return;
       }
       
+      // Determinar o userType baseado no role
+      const userType = values.role === 'admin' ? 'admin' : 
+                       values.role === 'usuario' ? 'staff' : 'client';
+      
       // Se estiver criando um novo usuário
       if (!selectedUser) {
         try {
@@ -194,12 +186,11 @@ export default function UsersPage() {
             values.email, 
             values.password || "Senha123!", // Senha padrão temporária se não fornecida
             values.name,
-            values.userType as 'admin' | 'staff' | 'client',
-            values.role, // role vem do form para compatibilidade com Firestore
+            userType,
+            values.role,
             {
               phone: values.phone,
-              department: values.department,
-              position: values.position,
+              position: values.cargo,
               clientId: values.clientId,
             }
           );
@@ -235,8 +226,14 @@ export default function UsersPage() {
           // Não enviamos a senha na atualização
           const { password, confirmPassword, ...updateData } = values;
           
+          // Determinar o userType baseado no role novamente para atualização
+          const userType = updateData.role === 'admin' ? 'admin' : 
+                           updateData.role === 'usuario' ? 'staff' : 'client';
+          
           await updateFirestoreUser(selectedUser.id, {
             ...updateData,
+            userType,
+            position: updateData.cargo,
             updatedAt: Date.now(),
           });
           
@@ -273,10 +270,8 @@ export default function UsersPage() {
     form.reset({
       name: "",
       email: "",
-      userType: "staff", // Padrão para funcionários internos
-      role: "usuario", // Padrão de acordo com as regras do Firestore
-      department: "",
-      position: "",
+      role: "usuario",
+      cargo: "",
       phone: "",
       password: "",
       confirmPassword: "",
@@ -287,15 +282,13 @@ export default function UsersPage() {
 
   const handleEditUser = (user: FirestoreUser) => {
     setSelectedUser(user);
-    setShowClientSelect(user.userType === 'client');
+    setShowClientSelect(user.role === 'cliente');
     
     form.reset({
       name: user.name,
       email: user.email,
-      userType: user.userType,
       role: user.role,
-      department: user.department || "",
-      position: user.position || "",
+      cargo: user.position || "",
       phone: user.phone || "",
       clientId: user.clientId,
       password: "",
@@ -361,6 +354,12 @@ export default function UsersPage() {
       }
     }
   };
+  
+  // Filtrar usuários com base na pesquisa
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const columns: ColumnDef<FirestoreUser>[] = [
     {
@@ -388,55 +387,29 @@ export default function UsersPage() {
       header: 'Email',
     },
     {
-      accessorKey: 'userType',
-      header: 'Tipo',
+      accessorKey: 'role',
+      header: 'Permissão',
       cell: ({ row }) => {
-        const userType = row.original.userType;
+        const role = row.original.role;
         let variant: "default" | "outline" | "secondary" | "destructive" = "default";
         let label = "";
         
-        switch (userType) {
+        switch (role) {
           case 'admin':
             variant = "destructive";
             label = "Administrador";
             break;
-          case 'staff':
+          case 'usuario':
             variant = "default";
             label = "Funcionário";
             break;
-          case 'client':
+          case 'cliente':
             variant = "secondary";
             label = "Cliente";
             break;
           default:
             variant = "outline";
-            label = userType || "Desconhecido";
-        }
-        
-        return <Badge variant={variant}>{label}</Badge>;
-      },
-    },
-    {
-      accessorKey: 'role',
-      header: 'Permissão',
-      cell: ({ row }) => {
-        const role = row.original.role;
-        let variant: "default" | "outline" | "secondary" = "outline";
-        let label = role || "N/A";
-        
-        switch (role) {
-          case 'admin':
-            variant = "secondary";
-            label = "Admin";
-            break;
-          case 'usuario':
-            variant = "default";
-            label = "Usuário";
-            break;
-          case 'cliente':
-            variant = "outline";
-            label = "Cliente";
-            break;
+            label = role || "Desconhecido";
         }
         
         return <Badge variant={variant}>{label}</Badge>;
@@ -446,11 +419,6 @@ export default function UsersPage() {
       accessorKey: 'position',
       header: 'Cargo',
       cell: ({ row }) => row.original.position || '-',
-    },
-    {
-      accessorKey: 'department',
-      header: 'Departamento',
-      cell: ({ row }) => row.original.department || '-',
     },
     {
       id: 'createdAt',
@@ -509,10 +477,10 @@ export default function UsersPage() {
     },
   ];
 
-  const userTypeOptions = [
+  const roleOptions = [
     { value: 'admin', label: 'Administrador' },
-    { value: 'staff', label: 'Funcionário' },
-    { value: 'client', label: 'Cliente' },
+    { value: 'usuario', label: 'Funcionário' },
+    { value: 'cliente', label: 'Cliente' },
   ];
 
   return (
@@ -547,7 +515,7 @@ export default function UsersPage() {
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Funcionários</h3>
               <p className="text-2xl font-bold">
-                {users.filter(u => u.userType === 'staff').length}
+                {users.filter(u => u.role === 'usuario').length}
               </p>
             </div>
             <div className="bg-green-100 dark:bg-green-900 rounded-full p-3 text-green-500 dark:text-green-400">
@@ -561,7 +529,7 @@ export default function UsersPage() {
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Clientes</h3>
               <p className="text-2xl font-bold">
-                {users.filter(u => u.userType === 'client').length}
+                {users.filter(u => u.role === 'cliente').length}
               </p>
             </div>
             <div className="bg-purple-100 dark:bg-purple-900 rounded-full p-3 text-purple-500 dark:text-purple-400">
@@ -571,13 +539,24 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+      {/* Barra de pesquisa */}
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <Input
+            type="search"
+            placeholder="Buscar usuários..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <DataTable 
           columns={columns} 
-          data={users} 
-          searchColumn="name"
-          searchPlaceholder="Buscar por nome..."
-          isLoading={isLoading}
+          data={filteredUsers} 
         />
       </div>
       
@@ -631,38 +610,10 @@ export default function UsersPage() {
                 
                 <FormField
                   control={form.control}
-                  name="userType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Usuário</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {userTypeOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Permissão (Firestore)</FormLabel>
+                      <FormLabel>Permissão</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
@@ -673,12 +624,13 @@ export default function UsersPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="usuario">Usuário</SelectItem>
-                          <SelectItem value="cliente">Cliente</SelectItem>
+                          {roleOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>Permissão usada nas regras do Firestore</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -719,26 +671,12 @@ export default function UsersPage() {
 
                 <FormField
                   control={form.control}
-                  name="department"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Departamento</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Departamento" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="position"
+                  name="cargo"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cargo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Cargo" {...field} />
+                        <Input placeholder="Cargo ou Função" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
