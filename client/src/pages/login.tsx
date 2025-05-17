@@ -14,15 +14,23 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { FirebaseError } from 'firebase/app';
-import { LockKeyhole, Mail } from 'lucide-react';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { LockKeyhole, Mail, Eye, EyeOff } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um endereço de email válido' }),
   password: z.string().min(6, { message: 'A senha deve ter pelo menos 6 caracteres' }),
-  rememberMe: z.boolean().optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -39,6 +47,8 @@ const getErrorMessage = (error: any): string => {
         return 'Não há usuário correspondente a este email.';
       case 'auth/wrong-password':
         return 'Senha incorreta para este email.';
+      case 'auth/invalid-credential':
+        return 'Credenciais inválidas. Verifique seu email e senha.';
       case 'auth/too-many-requests':
         return 'Muitas tentativas de login. Tente novamente mais tarde.';
       default:
@@ -52,19 +62,24 @@ export default function Login() {
   const { login, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
-      rememberMe: false,
     },
   });
 
   async function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
     try {
+      console.log('Tentando login com:', values.email);
       const success = await login(values.email, values.password);
       if (success) {
         navigate('/dashboard');
@@ -80,6 +95,7 @@ export default function Login() {
         });
       }
     } catch (error) {
+      console.error('Erro de login:', error);
       const errorMessage = getErrorMessage(error);
       toast({
         title: 'Erro de login',
@@ -90,6 +106,59 @@ export default function Login() {
       setIsLoading(false);
     }
   }
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail || !resetEmail.includes('@')) {
+      toast({
+        title: 'Email inválido',
+        description: 'Por favor, insira um endereço de email válido.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetEmailSent(true);
+      toast({
+        title: 'Email enviado',
+        description: 'Verifique sua caixa de entrada para redefinir sua senha.',
+      });
+    } catch (error) {
+      console.error('Erro ao enviar email de redefinição:', error);
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case 'auth/user-not-found':
+            toast({
+              title: 'Usuário não encontrado',
+              description: 'Não existe uma conta associada a este email.',
+              variant: 'destructive',
+            });
+            break;
+          case 'auth/invalid-email':
+            toast({
+              title: 'Email inválido',
+              description: 'Por favor, insira um endereço de email válido.',
+              variant: 'destructive',
+            });
+            break;
+          default:
+            toast({
+              title: 'Erro ao enviar email',
+              description: 'Ocorreu um erro ao enviar o email de redefinição de senha.',
+              variant: 'destructive',
+            });
+        }
+      }
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
@@ -133,47 +202,38 @@ export default function Login() {
                       Senha
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="••••••••"
-                        type="password"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="••••••••"
+                          type={showPassword ? "text" : "password"}
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                          onClick={togglePasswordVisibility}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="flex items-center justify-between">
-                <FormField
-                  control={form.control}
-                  name="rememberMe"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="text-sm cursor-pointer">Lembrar-me</FormLabel>
-                    </FormItem>
-                  )}
-                />
-
-                <a
-                  href="#"
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
                   className="text-sm font-medium text-primary hover:underline"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toast({
-                      title: 'Redefinição de senha',
-                      description: 'Entre em contato com o administrador para redefinir sua senha.',
-                    });
-                  }}
+                  onClick={() => setForgotPasswordOpen(true)}
                 >
                   Esqueceu sua senha?
-                </a>
+                </button>
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
@@ -183,6 +243,63 @@ export default function Login() {
           </Form>
         </div>
       </div>
+
+      {/* Diálogo para redefinição de senha */}
+      <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Redefinir Senha</DialogTitle>
+            <DialogDescription>
+              {!resetEmailSent 
+                ? 'Insira seu email para receber um link de redefinição de senha.'
+                : 'Um link de redefinição de senha foi enviado para o seu email.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {!resetEmailSent ? (
+            <>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <FormLabel htmlFor="resetEmail">Email</FormLabel>
+                  <Input
+                    id="resetEmail"
+                    placeholder="seu.email@exemplo.com"
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setForgotPasswordOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handlePasswordReset} 
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? 'Enviando...' : 'Enviar link'}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <DialogFooter>
+              <Button 
+                onClick={() => {
+                  setForgotPasswordOpen(false);
+                  setResetEmailSent(false);
+                  setResetEmail('');
+                }}
+              >
+                Voltar para o login
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
