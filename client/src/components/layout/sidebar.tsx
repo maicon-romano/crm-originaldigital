@@ -38,10 +38,10 @@ interface SidebarLinkProps {
 }
 
 const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false }: SidebarLinkProps) => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   
   // Se o link for apenas para admin e o usuário não for admin, não mostra o link
-  if (adminOnly && user?.role !== 'admin') {
+  if (adminOnly && !isAdmin) {
     return null;
   }
   
@@ -70,7 +70,7 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false 
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -274,7 +274,7 @@ export function Sidebar() {
             )}>
               <div className="relative">
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  {user?.role === 'admin' ? (
+                  {user?.userType === 'admin' || user?.role === 'admin' ? (
                     <Shield className="h-4 w-4 text-primary" />
                   ) : (
                     <span className="text-primary text-sm font-medium">
