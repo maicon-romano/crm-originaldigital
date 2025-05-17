@@ -236,6 +236,20 @@ export default function UsersPage() {
       // Criar usuário no Firebase primeiro se for um novo usuário
       if (!selectedUser?.id) {
         try {
+          // Verificar no banco de dados se o email já existe
+          const response = await fetch('/api/users');
+          const existingUsers = await response.json();
+          const existingEmail = existingUsers.find(u => u.email === values.email);
+          
+          if (existingEmail) {
+            toast({
+              title: 'Email já em uso',
+              description: 'Este email já está cadastrado no sistema. Por favor, use outro email.',
+              variant: 'destructive',
+            });
+            return;
+          }
+          
           // Integração com Firebase - criar usuário na autenticação
           const firebaseUser = await createUser(
             values.email, 
@@ -259,16 +273,21 @@ export default function UsersPage() {
           
           // Salvar no banco de dados
           createMutation.mutate(userToCreate);
-          
         } catch (error: any) {
+          console.error("Erro ao criar usuário:", error);
+          
           if (error.code === 'auth/email-already-in-use') {
             toast({
-              title: 'Email já em uso',
-              description: 'Este email já está associado a um usuário. Use outro email.',
+              title: 'Email já em uso no Firebase',
+              description: 'Este email já está registrado no Firebase. Use outro email ou contate o administrador.',
               variant: 'destructive',
             });
           } else {
-            throw error;
+            toast({
+              title: 'Erro ao criar usuário',
+              description: error.message || 'Ocorreu um erro ao criar o usuário',
+              variant: 'destructive',
+            });
           }
         }
       } else if (selectedUser?.id) {
@@ -457,7 +476,8 @@ export default function UsersPage() {
             size="icon"
             onClick={() => handleDeleteUser(row.original)}
             title="Delete"
-            disabled={row.original.role === 'admin'} // Prevent deleting admins
+            // Permitir a exclusão de todos os usuários exceto o original admin
+            disabled={row.original.firebaseUid === 'riwAaqRuxpXBP0uT1rMO1KGBsIW2'}
           >
             <Trash className="h-4 w-4" />
           </Button>
