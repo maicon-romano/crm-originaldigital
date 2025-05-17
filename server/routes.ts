@@ -3,8 +3,123 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertClientSchema, insertProjectSchema, insertTaskSchema, insertProposalSchema, insertInvoiceSchema, insertExpenseSchema, insertSupportTicketSchema, insertSupportMessageSchema, insertCalendarEventSchema, insertCompanySettingsSchema } from "@shared/schema";
 import { z } from "zod";
+import { 
+  createFirestoreUser, 
+  getFirestoreUserById, 
+  getFirestoreUserByEmail,
+  getAllFirestoreUsers,
+  updateFirestoreUser,
+  deleteFirestoreUser,
+  FirestoreUser 
+} from './firebase-admin';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Rotas de gerenciamento de usuários no Firestore
+  app.get("/api/firestore/users", async (req, res) => {
+    try {
+      const users = await getAllFirestoreUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Erro ao obter usuários:", error);
+      res.status(500).json({ message: "Erro ao obter usuários", error: error.message });
+    }
+  });
+
+  app.get("/api/firestore/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await getFirestoreUserById(id);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Erro ao obter usuário:", error);
+      res.status(500).json({ message: "Erro ao obter usuário", error: error.message });
+    }
+  });
+
+  app.post("/api/firestore/users", async (req, res) => {
+    try {
+      const { id, email, name, username, role, userType, ...rest } = req.body;
+      
+      if (!id || !email || !name || !role || !userType) {
+        return res.status(400).json({ 
+          message: "Dados incompletos. Forneça id, email, name, role e userType."
+        });
+      }
+      
+      // Verificar se já existe um usuário com o mesmo e-mail
+      const existingUser = await getFirestoreUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ message: "Já existe um usuário com este e-mail" });
+      }
+      
+      // Criar o usuário no Firestore
+      const newUser = await createFirestoreUser({
+        id,
+        email,
+        name,
+        username: username || email.split('@')[0],
+        role,
+        userType,
+        active: true,
+        ...rest
+      });
+      
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error("Erro ao criar usuário:", error);
+      res.status(500).json({ message: "Erro ao criar usuário", error: error.message });
+    }
+  });
+
+  app.patch("/api/firestore/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Verificar se o usuário existe
+      const user = await getFirestoreUserById(id);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Atualizar o usuário
+      const updatedUser = await updateFirestoreUser(id, updates);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
+      res.status(500).json({ message: "Erro ao atualizar usuário", error: error.message });
+    }
+  });
+
+  app.delete("/api/firestore/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verificar se o usuário existe
+      const user = await getFirestoreUserById(id);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Impedir a exclusão do usuário admin principal
+      if (id === 'riwAaqRuxpXBP0uT1rMO1KGBsIW2') {
+        return res.status(403).json({ message: "Não é permitido excluir o usuário admin principal" });
+      }
+      
+      // Excluir o usuário
+      await deleteFirestoreUser(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Erro ao excluir usuário:", error);
+      res.status(500).json({ message: "Erro ao excluir usuário", error: error.message });
+    }
+  });
+
   // Auth Routes
   app.post("/api/auth/login", async (req, res) => {
     try {

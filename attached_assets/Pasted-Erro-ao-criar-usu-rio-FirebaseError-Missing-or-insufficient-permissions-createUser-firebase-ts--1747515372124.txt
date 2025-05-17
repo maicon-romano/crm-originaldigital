@@ -1,0 +1,45 @@
+Erro ao criar usuário: FirebaseError: Missing or insufficient permissions.
+createUser @ firebase.ts:141
+await in createUser
+onSubmit @ users.tsx:185
+(anonymous) @ chunk-4BFJKWC4.js?v=4130af64:1465
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js?v=4130af64:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=4130af64:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=4130af64:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=4130af64:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=4130af64:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=4130af64:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=4130af64:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=4130af64:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=4130af64:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=4130af64:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=4130af64:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=4130af64:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=4130af64:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=4130af64:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=4130af64:5449Understand this error
+users.tsx:207 Erro ao criar usuário: FirebaseError: Missing or insufficient permissions.
+onSubmit @ users.tsx:207
+await in onSubmit
+(anonymous) @ chunk-4BFJKWC4.js?v=4130af64:1465
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js?v=4130af64:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=4130af64:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=4130af64:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=4130af64:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=4130af64:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=4130af64:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=4130af64:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=4130af64:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=4130af64:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=4130af64:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=4130af64:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=4130af64:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=4130af64:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=4130af64:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=4130af64:5449Understand this error
+firebase.ts:132 
+            
+            
+           POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fcrm-originaldigital%2Fdatabases%2F(default)&gsessionid=ctrEzdf6LT-DclUUwW7rspEtEsXaVA0aTiY-9lAEVNI&SID=1Z542MvqeCVrSdJWEtwnkg&RID=69693&TYPE=terminate&zx=w61sv4hxuad1 400 (Bad Request)
