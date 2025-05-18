@@ -12,6 +12,7 @@ import {
   deleteFirestoreUser,
   FirestoreUser 
 } from './firebase-admin';
+import { sendInvitationEmail, sendPasswordResetEmail } from './email';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Rotas de gerenciamento de usuários no Firestore
