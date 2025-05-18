@@ -377,9 +377,24 @@ export default function UsersPage() {
       }
     } catch (error: any) {
       console.error('Erro ao enviar convite:', error);
+      
+      // Extrair mensagem de erro de forma mais adequada
+      let errorMessage = 'Ocorreu um erro ao enviar o convite';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object') {
+        try {
+          errorMessage = JSON.stringify(error);
+        } catch (e) {
+          errorMessage = 'Erro desconhecido no envio do convite';
+        }
+      }
+      
+      // Mostrar mensagem de erro mais amigável
       toast({
         title: 'Erro ao enviar convite',
-        description: error.message || 'Ocorreu um erro ao enviar o convite',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

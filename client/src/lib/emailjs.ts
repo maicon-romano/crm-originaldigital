@@ -1,4 +1,4 @@
-import emailjs from '@emailjs/browser';
+import * as emailjs from '@emailjs/browser';
 
 // Configuração do EmailJS - valores fixos fornecidos pelo usuário
 const SERVICE_ID = 'service_gssy9h5';
@@ -13,6 +13,19 @@ interface SendInvitationParams {
   user_role: string;
 }
 
+// Função de utilidade para obter mensagem de erro formatada
+const getErrorMessage = (error: any): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  
+  if (typeof error === 'object' && error !== null) {
+    return JSON.stringify(error);
+  }
+  
+  return String(error);
+};
+
 /**
  * Envia um email de convite para um novo usuário usando EmailJS
  * @param params Parâmetros para o email de convite
@@ -24,9 +37,6 @@ export const sendInvitationEmail = async (params: SendInvitationParams): Promise
     if (!params.to_email || !params.to_name) {
       throw new Error('Email ou nome do destinatário não informados');
     }
-
-    // Inicializar o EmailJS com a chave pública
-    emailjs.init(PUBLIC_KEY);
     
     console.log('Enviando email de convite para:', params.to_email);
     
@@ -40,27 +50,54 @@ export const sendInvitationEmail = async (params: SendInvitationParams): Promise
       login_url: window.location.origin + '/login'
     };
     
-    // Log para debug
     console.log('Parâmetros do template:', JSON.stringify(templateParams));
     console.log('IDs de serviço e template:', SERVICE_ID, TEMPLATE_ID);
 
-    // Enviar o email usando a nova API do EmailJS
-    const response = await emailjs.send(
-      SERVICE_ID, 
-      TEMPLATE_ID, 
-      templateParams,
-      PUBLIC_KEY // Passando a chave pública como 4º parâmetro (opcional)
-    );
-    
-    console.log('Email de convite enviado com sucesso:', response);
-    return { 
-      success: true, 
-      message: 'Convite enviado com sucesso para ' + params.to_email 
-    };
+    // Usar método alternativo para enviar o email (approach via Promise)
+    try {
+      // Tentar com método sendForm
+      await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        templateParams,
+        PUBLIC_KEY
+      );
+      
+      console.log('Email de convite enviado com sucesso!');
+      return { 
+        success: true, 
+        message: 'Convite enviado com sucesso para ' + params.to_email 
+      };
+    } catch (sendError) {
+      console.warn('Erro no primeiro método de envio:', sendError);
+      
+      // Tentar com método alternativo
+      const form = document.createElement('form');
+      
+      // Adicionar campos para EmailJS
+      Object.entries(templateParams).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = String(value);
+        form.appendChild(input);
+      });
+      
+      // Enviar usando o método sendForm
+      await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, form, PUBLIC_KEY);
+      
+      console.log('Email de convite enviado com sucesso (método alternativo)!');
+      return { 
+        success: true, 
+        message: 'Convite enviado com sucesso para ' + params.to_email 
+      };
+    }
   } catch (error) {
     // Log detalhado do erro
     console.error('Erro ao enviar email de convite:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Formatar mensagem de erro adequadamente
+    const errorMessage = getErrorMessage(error);
     
     return { 
       success: false, 
