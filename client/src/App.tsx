@@ -45,19 +45,21 @@ function PasswordCheck({ children }: { children: ReactNode }) {
 
 export default function App() {
   const { user, isAuthenticated, isLoading, precisa_redefinir_senha } = useAuth();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+
+  console.log("App - Verificando redirecionamento:", {
+    user: user?.email,
+    precisa_redefinir_senha,
+    location
+  });
 
   useEffect(() => {
     // Se o usuário estiver logado e precisar trocar a senha, redireciona
-    if (!isLoading && user && precisa_redefinir_senha) {
+    if (!isLoading && user && precisa_redefinir_senha && location !== '/change-password') {
+      console.log("Redirecionando para /change-password devido a precisa_redefinir_senha=true");
       navigate("/change-password");
     }
-  }, [isLoading, user, precisa_redefinir_senha, navigate]);
-
-  // Se o usuário precisa trocar a senha, não renderiza nada (será redirecionado)
-  if (user && precisa_redefinir_senha) {
-    return null;
-  }
+  }, [isLoading, user, precisa_redefinir_senha, navigate, location]);
 
   return (
     <Switch>
@@ -66,7 +68,7 @@ export default function App() {
       </Route>
 
       <Route path="/change-password">
-        <ChangePasswordPage />
+        {user ? <ChangePasswordPage /> : <Login />}
       </Route>
       
       <Route path="/">
