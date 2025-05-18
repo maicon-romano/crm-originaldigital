@@ -1,0 +1,106 @@
+
+
+
+
+Ao cadastrar um novo cliente no sistema, deve ser criada automaticamente:
+
+1. O registro do cliente no banco de dados
+2. A estrutura de pastas organizada no Google Drive dentro da pasta **"Clientes"**
+
+---
+
+## 🧾 Parte 1: Informações obrigatórias para criar um novo cliente
+
+> Todos os campos abaixo devem ser preenchidos no momento da criação:
+
+### 🏢 **Dados da empresa**
+
+* Nome da empresa (razão social ou fantasia)
+* CNPJ ou CPF
+* Nome do responsável
+* Cargo
+* E-mail principal
+* Telefone / WhatsApp
+* Endereço completo
+* Cidade e Estado
+* Site
+
+### 💼 **Informações contratuais**
+
+* Serviços contratados (tráfego pago, social media, etc.)
+* Início do contrato
+* Data de vencimento (ou renovação)
+* Valor do contrato
+* Forma de pagamento (Pix, boleto, cartão)
+* Dia do pagamento
+* Status do contrato (ativo, pausado, encerrado)
+
+### 📱 **Presença digital**
+
+* Instagram
+* Facebook
+* LinkedIn
+* YouTube / TikTok
+* Plataforma do site atual (opcional)
+* Ferramentas que já utiliza (ex: Meta Ads, Google Ads)
+
+### 👤 **Acesso ao sistema (CRM)**
+
+* E-mail para login
+* Senha temporária gerada automaticamente
+* Permissões (cliente)
+
+---
+
+## 🗂️ Parte 2: Criar estrutura de pastas no Google Drive
+
+### 🎯 Estrutura de pastas esperada:
+
+Na pasta principal chamada “Clientes” (ID abaixo), deve ser criada uma nova pasta com o nome do cliente, contendo a seguinte hierarquia:
+
+```
+Clientes/
+└── Nome do Cliente/
+    ├── 01 - Briefing
+    ├── 02 - Materiais do Cliente
+    ├── 03 - Social Media
+    ├── 04 - Tráfego Pago
+    ├── 05 - Sites e Landing Pages
+    ├── 06 - Criativos/
+    │   ├── Fotos
+    │   └── Vídeos
+    ├── 07 - Documentos e Contratos
+    └── 08 - Relatórios
+```
+
+---
+
+### ✅ Informações técnicas para uso com a Google Drive API
+
+| Item                          | Valor / Observação                                                       |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| ID da pasta “Clientes”        | `18abqgDcOAkIzp79CYO9EpH2RrgluPnBI`                                      |
+| Conta de serviço autorizada   | `criar-pasta-cliente@crm-originaldigital-460218.iam.gserviceaccount.com` |
+| Arquivo JSON de autenticação (está em anexo o arquivo JSON)  | Deve ser utilizado para gerar o acesso autenticado à API                 | 
+| Escopo obrigatório da API     | `https://www.googleapis.com/auth/drive`                                  |
+| Permissão da conta de serviço | Compartilhada como **Editor** na pasta “Clientes”                        |
+
+---
+
+### ⚙️ Regras de funcionamento
+
+* A criação das pastas deve acontecer automaticamente após o cadastro do cliente
+* A pasta do cliente deve ser criada dentro da pasta “Clientes”
+* Subpastas devem ser criadas sequencialmente dentro da pasta do cliente
+* As subpastas “Fotos” e “Vídeos” devem ficar dentro de “06 - Criativos”
+* O nome da pasta principal deve ser exatamente o nome da empresa do cliente
+* O ID da pasta criada pode ser salvo junto ao cadastro no banco (opcional)
+
+---
+
+### 🛡️ Segurança e boas práticas
+
+* O JSON da conta de serviço deve ser armazenado fora do repositório (via `.env` ou variável protegida)
+* A autenticação não pode expor a `private_key` diretamente no código
+* As chamadas à API do Google devem ser feitas com controle de erro (ex: pasta já existente)
+ 

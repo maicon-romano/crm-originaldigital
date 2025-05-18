@@ -39,23 +39,31 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 const clientSchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
-  contactName: z.string().min(1, "Contact name is required"),
-  email: z.string().email("Invalid email address"),
+  companyName: z.string().min(1, "Nome da empresa é obrigatório"),
+  contactName: z.string().min(1, "Nome do contato é obrigatório"),
+  email: z.string().email("Email inválido"),
   phone: z.string().optional(),
-  cnpjCpf: z.string().optional(),
-  address: z.string().optional(),
+  cnpjCpf: z.string().min(1, "CNPJ/CPF é obrigatório"),
+  address: z.string().min(1, "Endereço é obrigatório"),
+  city: z.string().min(1, "Cidade é obrigatória"),
+  state: z.string().min(1, "Estado é obrigatório"),
+  website: z.string().optional(),
   instagram: z.string().optional(),
   facebook: z.string().optional(),
   linkedin: z.string().optional(),
+  youtube: z.string().optional(),
+  tiktok: z.string().optional(),
   paymentDay: z.string().optional(),
   contractValue: z.string().optional(),
-  contractStart: z.string().optional(),
+  contractStart: z.string().min(1, "Data de início do contrato é obrigatória"),
   contractEnd: z.string().optional(),
   category: z.string().optional(),
   description: z.string().optional(),
   observations: z.string().optional(),
   status: z.string().default("active"),
+  paymentMethod: z.string().optional(),
+  servicesPlatforms: z.string().optional(),
+  googleDriveFolderId: z.string().optional(),
 });
 
 export type Client = z.infer<typeof clientSchema> & {
@@ -296,9 +304,53 @@ export function ClientDialog({
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>Endereço</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Enter address" {...field} value={field.value || ""} />
+                        <Textarea placeholder="Digite o endereço completo" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cidade</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Digite a cidade" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Digite o estado" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Site</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Digite o site da empresa" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -313,7 +365,7 @@ export function ClientDialog({
                       <FormItem>
                         <FormLabel>Instagram</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter Instagram profile" {...field} value={field.value || ""} />
+                          <Input placeholder="Digite o perfil do Instagram" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -327,7 +379,7 @@ export function ClientDialog({
                       <FormItem>
                         <FormLabel>Facebook</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter Facebook profile" {...field} value={field.value || ""} />
+                          <Input placeholder="Digite o perfil do Facebook" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
