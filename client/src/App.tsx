@@ -23,56 +23,28 @@ import UsersPage from "@/pages/users";
 import ProfilePage from "@/pages/profile";
 import ChangePasswordPage from "@/pages/change-password";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
+import { AdminRoute } from "@/components/auth/admin-route";
 import { ReactNode, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 
-// Componente para proteger rotas que só devem ser acessadas por admin
-interface AdminRouteProps {
-  children: ReactNode;
-}
-
-function AdminRoute({ children }: AdminRouteProps) {
-  // Usamos o hook useAuth que já foi atualizado para identificar administradores
-  const { user, isLoading, isAdmin } = useAuth();
+// Função auxiliar para verificar se o usuário está autenticado
+function PasswordCheck({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    // Se não estiver carregando e o usuário não for administrador, redireciona
-    if (!isLoading && user && !isAdmin) {
-      toast({
-        title: "Acesso negado",
-        description: "Você não tem permissão para acessar esta página",
-        variant: "destructive",
-      });
-      navigate('/dashboard');
+    if (!isLoading && !isAuthenticated) {
+      navigate("/login");
     }
-  }, [user, isLoading, isAdmin, navigate]);
+  }, [isLoading, isAuthenticated, navigate]);
 
-  // Se estiver carregando, mostra um indicador de carregamento
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  if (isLoading || !isAuthenticated) return null;
 
-  // Se não estiver autenticado ou não for administrador, não renderiza nada
-  if (!user || !isAdmin) {
-    return null;
-  }
-
-  // Se for administrador, renderiza o conteúdo
   return <>{children}</>;
 }
 
-// Componente para verificar se o usuário precisa trocar a senha
-interface PasswordCheckProps {
-  children: ReactNode;
-}
-
-function PasswordCheck({ children }: PasswordCheckProps) {
-  const { user, isLoading, precisa_redefinir_senha } = useAuth();
+export default function App() {
+  const { user, isAuthenticated, isLoading, precisa_redefinir_senha } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -87,16 +59,15 @@ function PasswordCheck({ children }: PasswordCheckProps) {
     return null;
   }
 
-  // Caso contrário, renderiza o conteúdo normalmente
-  return <>{children}</>;
-}
-
-function Router() {
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      
-      <Route path="/change-password" component={ChangePasswordPage} />
+      <Route path="/login">
+        {isAuthenticated ? navigate("/") : <Login />}
+      </Route>
+
+      <Route path="/change-password">
+        <ChangePasswordPage />
+      </Route>
       
       <Route path="/">
         <PasswordCheck>
@@ -160,25 +131,31 @@ function Router() {
       
       <Route path="/proposals">
         <PasswordCheck>
-          <MainLayout>
-            <ProposalsPage />
-          </MainLayout>
+          <AdminRoute>
+            <MainLayout>
+              <ProposalsPage />
+            </MainLayout>
+          </AdminRoute>
         </PasswordCheck>
       </Route>
       
       <Route path="/invoices">
         <PasswordCheck>
-          <MainLayout>
-            <InvoicesPage />
-          </MainLayout>
+          <AdminRoute>
+            <MainLayout>
+              <InvoicesPage />
+            </MainLayout>
+          </AdminRoute>
         </PasswordCheck>
       </Route>
       
       <Route path="/expenses">
         <PasswordCheck>
-          <MainLayout>
-            <ExpensesPage />
-          </MainLayout>
+          <AdminRoute>
+            <MainLayout>
+              <ExpensesPage />
+            </MainLayout>
+          </AdminRoute>
         </PasswordCheck>
       </Route>
       
@@ -200,19 +177,21 @@ function Router() {
       
       <Route path="/settings">
         <PasswordCheck>
-          <MainLayout>
-            <SettingsPage />
-          </MainLayout>
+          <AdminRoute>
+            <MainLayout>
+              <SettingsPage />
+            </MainLayout>
+          </AdminRoute>
         </PasswordCheck>
       </Route>
       
       <Route path="/users">
         <PasswordCheck>
-          <MainLayout>
-            <AdminRoute>
+          <AdminRoute>
+            <MainLayout>
               <UsersPage />
-            </AdminRoute>
-          </MainLayout>
+            </MainLayout>
+          </AdminRoute>
         </PasswordCheck>
       </Route>
       
@@ -223,25 +202,25 @@ function Router() {
           </MainLayout>
         </PasswordCheck>
       </Route>
-      
-      <Route component={NotFound} />
+
+      <Route>
+        <NotFound />
+      </Route>
     </Switch>
   );
 }
 
-function App() {
+export function AppWithProviders() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="crm-theme">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <TooltipProvider>
+          <AuthProvider>
+            <App />
             <Toaster />
-            <Router />
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
-
-export default App;
