@@ -83,7 +83,7 @@ export default function ChangePasswordPage() {
       await updatePassword(auth.currentUser, data.newPassword);
       
       // Se o usuário estava com flag de alteração obrigatória, atualizar no Firestore
-      if (needsPasswordChange) {
+      if (precisa_redefinir_senha) {
         await updateUserAfterPasswordChange();
       }
       
@@ -123,7 +123,7 @@ export default function ChangePasswordPage() {
         <CardHeader>
           <CardTitle>Alteração de Senha</CardTitle>
           <CardDescription>
-            {needsPasswordChange 
+            {precisa_redefinir_senha 
               ? 'Você precisa alterar sua senha para continuar usando o sistema.' 
               : 'Altere sua senha para manter sua conta segura.'}
           </CardDescription>
@@ -207,7 +207,7 @@ export default function ChangePasswordPage() {
           </Form>
         </CardContent>
         <CardFooter className="flex justify-between">
-          {!needsPasswordChange && (
+          {!precisa_redefinir_senha && (
             <Button 
               variant="outline" 
               onClick={() => navigate('/')}

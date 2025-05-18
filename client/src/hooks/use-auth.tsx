@@ -77,8 +77,7 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
       email: firebaseUser.email,
       role: adminStatus ? 'admin' : 'usuario',
       userType: adminStatus ? 'admin' : 'staff',
-      firstLogin: false,
-      needsPasswordChange: false
+      precisa_redefinir_senha: false
     };
   }
 };
@@ -92,7 +91,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   isStaff: false,
   isClient: false,
-  needsPasswordChange: false,
+  precisa_redefinir_senha: false,
   updateUserAfterPasswordChange: async () => {},
 });
 
