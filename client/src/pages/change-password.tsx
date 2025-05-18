@@ -44,7 +44,7 @@ const passwordSchema = z.object({
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export default function ChangePasswordPage() {
-  const { user, needsPasswordChange, updateUserAfterPasswordChange } = useAuth();
+  const { user, precisa_redefinir_senha, updateUserAfterPasswordChange } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, navigate] = useLocation();
   

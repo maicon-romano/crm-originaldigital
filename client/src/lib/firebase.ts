@@ -177,13 +177,12 @@ export const getFirestoreUserById = async (userId: string): Promise<FirestoreUse
       const userData = userDoc.data() as FirestoreUser;
       console.log("Dados brutos do usuário no Firestore:", userData);
       
-      // Garantir que as flags de primeiro login estejam presentes
-      // Para usuários existentes, se as flags não estiverem definidas, consideramos como false
+      // Garantir que o campo precisa_redefinir_senha esteja presente
+      // Para usuários existentes, se esse campo não estiver definido, consideramos como false
       // pois são usuários antigos que já usaram o sistema
       const userWithFlags = {
         ...userData,
-        firstLogin: userData.firstLogin ?? false,
-        needsPasswordChange: userData.needsPasswordChange ?? false
+        precisa_redefinir_senha: userData.precisa_redefinir_senha ?? false
       };
       
       // Depuração

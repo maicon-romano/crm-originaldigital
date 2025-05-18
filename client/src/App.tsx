@@ -72,18 +72,18 @@ interface PasswordCheckProps {
 }
 
 function PasswordCheck({ children }: PasswordCheckProps) {
-  const { user, isLoading, needsPasswordChange } = useAuth();
+  const { user, isLoading, precisa_redefinir_senha } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
     // Se o usuário estiver logado e precisar trocar a senha, redireciona
-    if (!isLoading && user && needsPasswordChange) {
+    if (!isLoading && user && precisa_redefinir_senha) {
       navigate("/change-password");
     }
-  }, [isLoading, user, needsPasswordChange, navigate]);
+  }, [isLoading, user, precisa_redefinir_senha, navigate]);
 
   // Se o usuário precisa trocar a senha, não renderiza nada (será redirecionado)
-  if (user && needsPasswordChange) {
+  if (user && precisa_redefinir_senha) {
     return null;
   }
 

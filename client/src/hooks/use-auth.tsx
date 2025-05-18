@@ -157,9 +157,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const isAuthenticated = !!user;
   
-  // Verificar se o usuário precisa trocar a senha - isso é determinado pelas flags no Firestore
-  console.log("Verificando flags do usuário:", user);
-  const needsPasswordChange = !!user?.needsPasswordChange || !!user?.firstLogin;
+  // Verificar se o usuário precisa trocar a senha - isso é determinado pela flag no Firestore
+  console.log("Verificando flag precisa_redefinir_senha do usuário:", user);
+  const precisa_redefinir_senha = !!user?.precisa_redefinir_senha;
   
   // Função para atualizar o usuário após mudar a senha
   const updateUserAfterPasswordChange = async (): Promise<void> => {
@@ -170,8 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            needsPasswordChange: false,
-            firstLogin: false
+            precisa_redefinir_senha: false
           })
         });
         
@@ -202,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       isStaff,
       isClient,
-      needsPasswordChange,
+      precisa_redefinir_senha,
       updateUserAfterPasswordChange
     }}>
       {children}
