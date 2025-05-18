@@ -331,7 +331,7 @@ export default function UsersPage() {
   // Estado para controlar o envio de convites
   const [sendingInvite, setSendingInvite] = useState<string | null>(null);
 
-  // Enviar convite por email para novo usuário
+  // Enviar convite por email para novo usuário usando o backend
   const sendInvitation = async (user: FirestoreUser) => {
     // Não fazer nada se já estiver enviando para este usuário
     if (sendingInvite === user.id) return;
@@ -349,36 +349,41 @@ export default function UsersPage() {
       // Gerar uma senha temporária para o usuário
       const tempPassword = "Senha123!"; // Senha temporária padrão
       
-      // Importar diretamente do módulo atualizado com emailjs
-      const emailModule = await import('@/lib/emailjs');
-      
       // Preparar dados para o convite
       const userRole = user.role === 'admin' ? 'Administrador' : 
-                      user.role === 'usuario' ? 'Usuário' : 'Cliente';
+                     user.role === 'usuario' ? 'Usuário' : 'Cliente';
       
-      console.log(`Enviando convite para ${user.email} com papel ${userRole}`);
+      console.log(`Enviando convite via backend para ${user.email} com papel ${userRole}`);
       
-      // Enviar o email de convite com as credenciais usando emailjs
-      const result = await emailModule.sendInvitationEmail({
-        to_email: user.email,
-        to_name: user.name,
-        password: tempPassword,
-        user_role: userRole
+      // Chamar a API do backend para enviar o email
+      const response = await fetch('/api/email/send-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          name: user.name,
+          password: tempPassword,
+          role: userRole
+        }),
       });
       
-      if (result.success) {
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
         // Mostrar toast de sucesso
         toast({
           title: 'Convite enviado com sucesso!',
           description: `Email enviado para ${user.email} com as credenciais de acesso`,
         });
       } else {
-        throw new Error(result.message);
+        throw new Error(result.message || 'Erro ao enviar convite');
       }
     } catch (error: any) {
       console.error('Erro ao enviar convite:', error);
       
-      // Extrair mensagem de erro de forma mais adequada
+      // Extrair mensagem de erro de forma adequada
       let errorMessage = 'Ocorreu um erro ao enviar o convite';
       
       if (error.message) {
