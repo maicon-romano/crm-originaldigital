@@ -76,16 +76,6 @@ const userSchema = z.object({
   cargo: z.string().optional(),
   phone: z.string().optional(),
   clientId: z.number().optional(),
-  password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }).optional().or(z.literal('')),
-  confirmPassword: z.string().optional().or(z.literal('')),
-}).refine((data) => {
-  if (data.password && data.confirmPassword) {
-    return data.password === data.confirmPassword;
-  }
-  return true;
-}, {
-  message: "As senhas não coincidem",
-  path: ["confirmPassword"],
 });
 
 type UserFormData = z.infer<typeof userSchema>;
@@ -101,6 +91,7 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sendingInvite, setSendingInvite] = useState<string | null>(null);
   
   // Senha temporária padrão para novos usuários
   const DEFAULT_TEMP_PASSWORD = "Senha123!";
@@ -118,8 +109,6 @@ export default function UsersPage() {
       role: "usuario",
       cargo: "",
       phone: "",
-      password: "",
-      confirmPassword: "",
     },
   });
   
