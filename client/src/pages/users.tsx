@@ -124,13 +124,15 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const querySnapshot = await getDocs(usersCollection);
-      const usersData: FirestoreUser[] = [];
       
-      querySnapshot.forEach((doc) => {
-        usersData.push({ id: doc.id, ...doc.data() } as FirestoreUser);
-      });
+      // Usar a API do servidor para buscar usuários (contorna as restrições de permissão)
+      const response = await fetch('/api/firestore/users');
       
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar usuários: ${response.statusText}`);
+      }
+      
+      const usersData = await response.json();
       setUsers(usersData);
       setIsLoading(false);
     } catch (error) {
