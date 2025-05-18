@@ -142,66 +142,86 @@ function Router() {
       
       <Route path="/projects/:id">
         {params => (
-          <MainLayout>
-            <ProjectDetailPage id={params.id} />
-          </MainLayout>
+          <PasswordCheck>
+            <MainLayout>
+              <ProjectDetailPage id={params.id} />
+            </MainLayout>
+          </PasswordCheck>
         )}
       </Route>
       
       <Route path="/tasks">
-        <MainLayout>
-          <TasksPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <TasksPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/proposals">
-        <MainLayout>
-          <ProposalsPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <ProposalsPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/invoices">
-        <MainLayout>
-          <InvoicesPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <InvoicesPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/expenses">
-        <MainLayout>
-          <ExpensesPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <ExpensesPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/support">
-        <MainLayout>
-          <SupportPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <SupportPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/calendar">
-        <MainLayout>
-          <CalendarPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <CalendarPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/settings">
-        <MainLayout>
-          <SettingsPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <SettingsPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/users">
-        <MainLayout>
-          <AdminRoute>
-            <UsersPage />
-          </AdminRoute>
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <AdminRoute>
+              <UsersPage />
+            </AdminRoute>
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/profile">
-        <MainLayout>
-          <ProfilePage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <ProfilePage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route component={NotFound} />
