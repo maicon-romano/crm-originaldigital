@@ -33,30 +33,37 @@ const CREATIVE_SUBFOLDERS = [
  */
 async function getAuthClient() {
   try {
-    // Verificar se as credenciais estão disponíveis como variáveis de ambiente
-    const credentials = {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      client_id: process.env.GOOGLE_CLIENT_ID,
-    };
-
-    // Se as credenciais não estiverem disponíveis como variáveis de ambiente,
-    // tenta ler do arquivo JSON (não recomendado para produção)
-    if (!credentials.client_email || !credentials.private_key) {
-      console.log('Credenciais do Google não encontradas nas variáveis de ambiente, tentando ler do arquivo JSON...');
+    // Verificar credenciais do arquivo JSON primeiro (prioridade)
+    let credentials: any = null;
+    
+    const keyFilePath = path.resolve(__dirname, '../attached_assets/crm-originaldigital-460218-03c085ac30b8.json');
+    if (fs.existsSync(keyFilePath)) {
+      console.log('Lendo credenciais do arquivo JSON...');
+      const keyFileContent = fs.readFileSync(keyFilePath, 'utf8');
+      const keyData = JSON.parse(keyFileContent);
       
-      const keyFilePath = path.resolve(__dirname, '../crm-originaldigital-460218-03c085ac30b8.json');
-      if (fs.existsSync(keyFilePath)) {
-        const keyFileContent = fs.readFileSync(keyFilePath, 'utf8');
-        const keyData = JSON.parse(keyFileContent);
-        credentials.client_email = keyData.client_email;
-        credentials.private_key = keyData.private_key;
-        credentials.client_id = keyData.client_id;
-      } else {
-        throw new Error('Arquivo de credenciais do Google não encontrado');
-      }
+      credentials = {
+        client_email: keyData.client_email,
+        private_key: keyData.private_key,
+        client_id: keyData.client_id,
+      };
+    } else {
+      // Usar variáveis de ambiente como fallback
+      console.log('Arquivo JSON não encontrado, usando variáveis de ambiente...');
+      credentials = {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        client_id: process.env.GOOGLE_CLIENT_ID,
+      };
     }
 
+    // Verificar se temos credenciais válidas
+    if (!credentials.client_email || !credentials.private_key) {
+      throw new Error('Credenciais do Google Drive não encontradas. Verifique o arquivo JSON ou as variáveis de ambiente.');
+    }
+
+    console.log(`Autenticando com o Google Drive usando a conta: ${credentials.client_email}`);
+    
     // Criar cliente JWT com as credenciais
     const auth = new JWT({
       email: credentials.client_email,
@@ -65,6 +72,7 @@ async function getAuthClient() {
     });
 
     await auth.authorize(); // Garantir que a autenticação funcione
+    console.log('Autenticação com o Google Drive realizada com sucesso');
     return auth;
   } catch (error) {
     console.error('Erro ao autenticar com o Google Drive:', error);

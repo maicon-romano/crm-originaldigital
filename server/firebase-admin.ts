@@ -43,8 +43,102 @@ try {
   throw error;
 }
 
-// Referência à coleção de usuários
+// Referência às coleções
 const usersCollection = firestore.collection('usuarios');
+const clientsCollection = firestore.collection('clientes');
+
+// Interface para cliente no Firestore
+export interface FirestoreClient {
+  id?: string;            // ID gerado pelo Firestore
+  companyName: string;    // Nome da empresa
+  contactName: string;    // Nome do contato
+  email: string;          // Email do contato
+  phone?: string;         // Telefone
+  cnpjCpf: string;        // CNPJ ou CPF
+  address: string;        // Endereço
+  city: string;           // Cidade
+  state: string;          // Estado
+  website?: string;       // Site
+  instagram?: string;     // Instagram
+  facebook?: string;      // Facebook
+  linkedin?: string;      // LinkedIn
+  youtube?: string;       // YouTube
+  tiktok?: string;        // TikTok
+  paymentDay?: string;    // Dia do pagamento
+  contractValue?: string; // Valor do contrato
+  contractStart: string;  // Data de início do contrato
+  contractEnd?: string;   // Data de término do contrato
+  category?: string;      // Categoria
+  description?: string;   // Cargo do contato ou descrição
+  observations?: string;  // Observações
+  status: string;         // Status: active, paused, closed
+  paymentMethod?: string; // Método de pagamento
+  servicesPlatforms?: string; // Plataformas de serviço
+  googleDriveFolderId?: string; // ID da pasta no Google Drive
+  userId?: string;        // ID do usuário associado (se existir)
+  createdAt: number;      // Timestamp
+  updatedAt: number;      // Timestamp
+}
+
+// Função para criar um cliente no Firestore
+export async function createFirestoreClient(clientData: Omit<FirestoreClient, 'createdAt' | 'updatedAt'>) {
+  const now = Date.now();
+  const clientToSave = {
+    ...clientData,
+    createdAt: now,
+    updatedAt: now
+  };
+
+  const docRef = await clientsCollection.add(clientToSave);
+  const snapshot = await docRef.get();
+  
+  return {
+    id: docRef.id,
+    ...snapshot.data()
+  } as FirestoreClient;
+}
+
+// Função para obter todos os clientes do Firestore
+export async function getAllFirestoreClients() {
+  const snapshot = await clientsCollection.get();
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as FirestoreClient[];
+}
+
+// Função para obter um cliente do Firestore pelo ID
+export async function getFirestoreClientById(clientId: string) {
+  const doc = await clientsCollection.doc(clientId).get();
+  if (!doc.exists) return null;
+  
+  return {
+    id: doc.id,
+    ...doc.data()
+  } as FirestoreClient;
+}
+
+// Função para atualizar um cliente no Firestore
+export async function updateFirestoreClient(clientId: string, clientData: Partial<FirestoreClient>) {
+  const updateData = {
+    ...clientData,
+    updatedAt: Date.now()
+  };
+  
+  await clientsCollection.doc(clientId).update(updateData);
+  const doc = await clientsCollection.doc(clientId).get();
+  
+  return {
+    id: doc.id,
+    ...doc.data()
+  } as FirestoreClient;
+}
+
+// Função para excluir um cliente do Firestore
+export async function deleteFirestoreClient(clientId: string) {
+  await clientsCollection.doc(clientId).delete();
+  return true;
+}
 
 // Função para criar um usuário no Firestore
 export async function createFirestoreUser(userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>) {

@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertClientSchema, insertProjectSchema, insertTaskSchema, insertProposalSchema, insertInvoiceSchema, insertExpenseSchema, insertSupportTicketSchema, insertSupportMessageSchema, insertCalendarEventSchema, insertCompanySettingsSchema } from "@shared/schema";
 import { z } from "zod";
+import admin from 'firebase-admin';
 import { 
   createFirestoreUser, 
   getFirestoreUserById, 
@@ -10,10 +11,15 @@ import {
   getAllFirestoreUsers,
   updateFirestoreUser,
   deleteFirestoreUser,
-  FirestoreUser 
+  FirestoreUser,
+  createFirestoreClient,
+  updateFirestoreClient,
+  FirestoreClient
 } from './firebase-admin';
 // Importar o serviço do Google Drive
 import { createClientFolderStructure } from './google-drive-service';
+// Importar serviço de email
+import { sendInvitationEmail } from './email-service';
 // Importar registradores de rotas
 import { registerEmailRoutes } from './email-routes';
 
