@@ -160,8 +160,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const isAuthenticated = !!user;
   
-  // Verificar se o usuário precisa trocar a senha
-  const needsPasswordChange = !!user?.needsPasswordChange;
+  // Verificar se o usuário precisa trocar a senha - isso é determinado pelas flags no Firestore
+  console.log("Verificando flags do usuário:", user);
+  const needsPasswordChange = !!user?.needsPasswordChange || !!user?.firstLogin;
   
   // Função para atualizar o usuário após mudar a senha
   const updateUserAfterPasswordChange = async (): Promise<void> => {
