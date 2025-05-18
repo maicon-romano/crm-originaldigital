@@ -117,7 +117,12 @@ export const createUser = async (
     
     // Extrair campos específicos de extraData
     if (extraData) {
-      if (extraData.position) userData.position = extraData.position;
+      if (extraData.position) {
+        // Garantir que position seja salvo - este é o campo "cargo"
+        userData.position = extraData.position;
+        userData.cargo = extraData.position; // Adicionar tanto position quanto cargo
+        console.log('Campo position/cargo definido como:', extraData.position);
+      }
       if (extraData.phone) userData.phone = extraData.phone;
       if (extraData.clientId) userData.clientId = extraData.clientId;
       // Adicionar outros campos relevantes
@@ -133,7 +138,9 @@ export const createUser = async (
       },
       body: JSON.stringify({
         ...userData,
-        firebaseUid: userData.id // Adicionar campo para identificar o usuário no Firebase
+        firebaseUid: userData.id, // Adicionar campo para identificar o usuário no Firebase
+        position: userData.position || userData.cargo || "", // Garantir que position seja enviado
+        cargo: userData.position || userData.cargo || "", // Enviar também como cargo
       }),
     });
     
