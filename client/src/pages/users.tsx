@@ -96,9 +96,6 @@ export default function UsersPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [sendingInvite, setSendingInvite] = useState<string | null>(null);
   
-  // Senha temporária padrão para novos usuários
-  const DEFAULT_TEMP_PASSWORD = "Senha123!";
-  
   // Carregar lista de clientes para associar a usuários do tipo 'client'
   const { data: clients = [] } = useQuery<{ id: number, companyName: string }[]>({
     queryKey: ['/api/clients'],
@@ -358,7 +355,7 @@ export default function UsersPage() {
         body: JSON.stringify({
           email: user.email,
           name: user.name,
-          password: tempPassword,
+          password: DEFAULT_TEMP_PASSWORD,
           role: userRole
         }),
         signal: controller.signal,
