@@ -177,12 +177,11 @@ export const getFirestoreUserById = async (userId: string): Promise<FirestoreUse
       const userData = userDoc.data() as FirestoreUser;
       console.log("Dados brutos do usuário no Firestore:", userData);
       
-      // Garantir que o campo precisa_redefinir_senha esteja presente
-      // Para usuários existentes, se esse campo não estiver definido, consideramos como false
-      // pois são usuários antigos que já usaram o sistema
+      // Garantir que o campo precisa_redefinir_senha seja preservado exatamente como está no Firestore
+      // Não devemos substituí-lo com um valor padrão, pois isso anularia o valor definido pelo servidor
       const userWithFlags = {
         ...userData,
-        precisa_redefinir_senha: userData.precisa_redefinir_senha ?? false
+        precisa_redefinir_senha: userData.precisa_redefinir_senha
       };
       
       // Depuração

@@ -59,11 +59,18 @@ export async function createFirestoreUser(userData: Omit<FirestoreUser, 'created
       }
     });
     
+    // Garantir que precisa_redefinir_senha seja sempre definido para novos usuários
+    // como foi especificado, ou fallback para true (comportamento mais seguro)
     const completeData = {
       ...cleanUserData,
       createdAt: timestamp,
-      updatedAt: timestamp
+      updatedAt: timestamp,
+      precisa_redefinir_senha: cleanUserData.precisa_redefinir_senha !== undefined 
+        ? cleanUserData.precisa_redefinir_senha 
+        : true
     };
+    
+    console.log("Salvando usuário com dados completos:", completeData);
     
     await usersCollection.doc(userData.id).set(completeData);
     return completeData as FirestoreUser;

@@ -1,0 +1,31 @@
+Tentando login com email: shardersfx@gmail.cm
+firebase.ts:72 Auth state changed: User is signed in yYFKf9LIPcbIW7nxHOuh8UG4D6g2
+firebase.ts:309 Login realizado com sucesso: yYFKf9LIPcbIW7nxHOuh8UG4D6g2
+firebase.ts:178 Dados brutos do usuário no Firestore: {userType: 'admin', position: 'Sócio', updatedAt: 1747588986135, name: 'Maicon teste', username: 'shardersfx', …}active: truecreatedAt: 1747588986135email: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"position: "Sócio"role: "admin"updatedAt: 1747588986135userType: "admin"username: "shardersfx"[[Prototype]]: Object
+firebase.ts:189 Dados completos do usuário no Firestore: {userType: 'admin', position: 'Sócio', updatedAt: 1747588986135, name: 'Maicon teste', username: 'shardersfx', …}active: truecreatedAt: 1747588986135email: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"position: "Sócio"precisa_redefinir_senha: falserole: "admin"updatedAt: 1747588986135userType: "admin"username: "shardersfx"[[Prototype]]: Object
+use-auth.tsx:43 Dados completos do usuário no Firestore: {userType: 'admin', position: 'Sócio', updatedAt: 1747588986135, name: 'Maicon teste', username: 'shardersfx', …}active: truecreatedAt: 1747588986135email: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"position: "Sócio"precisa_redefinir_senha: falserole: "admin"updatedAt: 1747588986135userType: "admin"username: "shardersfx"[[Prototype]]: Object
+use-auth.tsx:111 Usuário autenticado: {id: 'yYFKf9LIPcbIW7nxHOuh8UG4D6g2', name: 'Maicon teste', email: 'shardersfx@gmail.cm', role: 'admin', userType: 'admin', …}clientId: undefinedemail: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"precisa_redefinir_senha: falserole: "admin"userType: "admin"[[Prototype]]: Object
+firebase.ts:178 Dados brutos do usuário no Firestore: {userType: 'admin', position: 'Sócio', updatedAt: 1747588986135, name: 'Maicon teste', username: 'shardersfx', …}active: truecreatedAt: 1747588986135email: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"position: "Sócio"role: "admin"updatedAt: 1747588986135userType: "admin"username: "shardersfx"[[Prototype]]: Object
+firebase.ts:189 Dados completos do usuário no Firestore: {userType: 'admin', position: 'Sócio', updatedAt: 1747588986135, name: 'Maicon teste', username: 'shardersfx', …}active: truecreatedAt: 1747588986135email: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"position: "Sócio"precisa_redefinir_senha: falserole: "admin"updatedAt: 1747588986135userType: "admin"username: "shardersfx"[[Prototype]]: Object
+use-auth.tsx:160 Verificando flag precisa_redefinir_senha do usuário: {id: 'yYFKf9LIPcbIW7nxHOuh8UG4D6g2', name: 'Maicon teste', email: 'shardersfx@gmail.cm', role: 'admin', userType: 'admin', …}clientId: undefinedemail: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"precisa_redefinir_senha: falserole: "admin"userType: "admin"[[Prototype]]: Object
+firebase.ts:178 Dados brutos do usuário no Firestore: {userType: 'admin', position: 'Sócio', updatedAt: 1747588986135, name: 'Maicon teste', username: 'shardersfx', …}active: truecreatedAt: 1747588986135email: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"position: "Sócio"role: "admin"updatedAt: 1747588986135userType: "admin"username: "shardersfx"[[Prototype]]: Object
+firebase.ts:189 Dados completos do usuário no Firestore: {userType: 'admin', position: 'Sócio', updatedAt: 1747588986135, name: 'Maicon teste', username: 'shardersfx', …}active: truecreatedAt: 1747588986135email: "shardersfx@gmail.cm"id: "yYFKf9LIPcbIW7nxHOuh8UG4D6g2"name: "Maicon teste"position: "Sócio"precisa_redefinir_senha: falserole: "admin"updatedAt: 1747588986135userType: "admin"username: "shardersfx"[[Prototype]]: Object
+login.tsx:112 Warning: validateDOMNesting(...): <a> cannot appear as a descendant of <a>.
+    at a
+    at a
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1fb7cd89:337:18
+    at div
+    at aside
+    at Sidebar (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/layout/sidebar.tsx:99:22)
+    at div
+    at MainLayout (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/layout/main-layout.tsx:65:30)
+    at PasswordCheck (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/App.tsx?v=UG2_4N9lPlzG92Vx6_CJG:83:26)
+    at Route (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1fb7cd89:323:16)
+    at Switch (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1fb7cd89:379:17)
+    at Router
+    at Provider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-E7IAXTU4.js?v=1fb7cd89:38:15)
+    at TooltipProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=1fb7cd89:61:5)
+    at AuthProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/hooks/use-auth.tsx:78:32)
+    at QueryClientProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=1fb7cd89:2805:3)
+    at ThemeProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/ui/theme-provider.tsx:25:3)
+    at App

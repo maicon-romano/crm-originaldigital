@@ -151,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const position = userData.cargo || userData.position;
       console.log("Valor do cargo/position a ser salvo:", position);
       
-      // Criar o usuário no Firestore
+      // Criar o usuário no Firestore com a flag de redefinição de senha
       const newUser = await createFirestoreUser({
         id: userData.firebaseUid,
         email: userData.email,
@@ -160,6 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: userData.role || 'usuario',
         userType: userData.userType || 'staff',
         active: true,
+        precisa_redefinir_senha: true, // Definir explicitamente que precisa trocar a senha
         phone: userData.phone,
         position, // Garantir que o campo position seja salvo
         clientId: userData.clientId,
