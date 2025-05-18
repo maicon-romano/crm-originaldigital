@@ -45,27 +45,26 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false 
     return null;
   }
   
-  // Solução usando span em vez de um elemento aninhado mais complexo
+  // Usando o padrão de função render para evitar o aninhamento de <a> dentro de <a>
   return (
-    <Link href={href}>
-      <span
-        className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-          isActive
-            ? "bg-primary text-white dark:bg-primary/80"
-            : "text-gray-300 hover:bg-gray-700 hover:text-white"
-        )}
-      >
-        <span className="flex-shrink-0 w-5 h-5">{icon}</span>
-        {!collapsed && (
-          <span className="font-medium flex-1">
-            {text}
-            {adminOnly && <Shield className="inline-block ml-2 h-3 w-3" />}
-          </span>
-        )}
-        {collapsed && adminOnly && <Shield className="h-3 w-3 absolute right-2 top-2" />}
-      </span>
-    </Link>
+    <div 
+      onClick={() => { window.location.href = href; }}
+      className={cn(
+        "cursor-pointer flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+        isActive
+          ? "bg-primary text-white dark:bg-primary/80"
+          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+      )}
+    >
+      <span className="flex-shrink-0 w-5 h-5">{icon}</span>
+      {!collapsed && (
+        <span className="font-medium flex-1">
+          {text}
+          {adminOnly && <Shield className="inline-block ml-2 h-3 w-3" />}
+        </span>
+      )}
+      {collapsed && adminOnly && <Shield className="h-3 w-3 absolute right-2 top-2" />}
+    </div>
   );
 };
 
