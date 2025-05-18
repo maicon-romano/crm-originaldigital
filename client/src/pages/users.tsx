@@ -235,8 +235,8 @@ export default function UsersPage() {
       } else {
         // Atualizar usuário existente no Firestore
         try {
-          // Não enviamos a senha na atualização
-          const { password, confirmPassword, ...updateData } = values;
+          // Extrair os dados de atualização
+          const updateData = values;
           
           // Determinar o userType baseado no role novamente para atualização
           const userType = updateData.role === 'admin' ? 'admin' : 
@@ -297,8 +297,6 @@ export default function UsersPage() {
       role: "usuario",
       cargo: "",
       phone: "",
-      password: "",
-      confirmPassword: "",
     });
     setShowClientSelect(false);
     setDialogOpen(true);
@@ -315,8 +313,6 @@ export default function UsersPage() {
       cargo: user.position || "",
       phone: user.phone || "",
       clientId: user.clientId,
-      password: "",
-      confirmPassword: "",
     });
     setDialogOpen(true);
   };
@@ -342,8 +338,7 @@ export default function UsersPage() {
         duration: 5000, // 5 segundos
       });
       
-      // Gerar uma senha temporária para o usuário
-      const tempPassword = "Senha123!"; // Senha temporária padrão
+      // Usar a senha temporária padrão já definida no início do arquivo
       
       // Preparar dados para o convite
       const userRole = user.role === 'admin' ? 'Administrador' : 
