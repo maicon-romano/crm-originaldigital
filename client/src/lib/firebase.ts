@@ -58,8 +58,7 @@ export interface FirestoreUser {
   avatar?: string;
   clientId?: number;
   active: boolean;
-  firstLogin?: boolean;      // Indica se é o primeiro login do usuário
-  needsPasswordChange?: boolean; // Indica se o usuário precisa trocar a senha
+  precisa_redefinir_senha: boolean; // Indica se o usuário precisa trocar a senha no primeiro login
   createdAt: number;     // Timestamp para compatibilidade com Firestore
   updatedAt: number;     // Timestamp para compatibilidade com Firestore
 }

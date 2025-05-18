@@ -28,7 +28,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isStaff: boolean;
   isClient: boolean;
-  needsPasswordChange: boolean;
+  precisa_redefinir_senha: boolean;
   updateUserAfterPasswordChange: () => Promise<void>;
 }
 
@@ -49,8 +49,7 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
         role: firestoreUser.role,
         userType: firestoreUser.userType,
         clientId: firestoreUser.clientId,
-        firstLogin: firestoreUser.firstLogin || false,
-        needsPasswordChange: firestoreUser.needsPasswordChange || false
+        precisa_redefinir_senha: firestoreUser.precisa_redefinir_senha || false
       };
     }
     
@@ -65,8 +64,7 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
       email: firebaseUser.email,
       role: isMainAdmin ? 'admin' : 'usuario',
       userType: isMainAdmin ? 'admin' : 'staff',
-      firstLogin: false,
-      needsPasswordChange: false
+      precisa_redefinir_senha: false
     };
   } catch (error) {
     console.error("Erro ao mapear usuário do Firestore:", error);
