@@ -232,12 +232,24 @@ export default function UsersPage() {
           const userType = updateData.role === 'admin' ? 'admin' : 
                            updateData.role === 'usuario' ? 'staff' : 'client';
           
-          await updateFirestoreUser(selectedUser.id, {
-            ...updateData,
-            userType,
-            position: updateData.cargo,
-            updatedAt: Date.now(),
+          // Usar fetch para enviar a atualização para a API do servidor
+          const response = await fetch(`/api/firestore/users/${selectedUser.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              ...updateData,
+              userType,
+              position: updateData.cargo,
+              updatedAt: Date.now(),
+            }),
           });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Erro ao atualizar usuário: ${errorData.message || response.statusText}`);
+          }
           
           toast({
             title: 'Usuário atualizado',
