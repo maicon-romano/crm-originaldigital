@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de Envio de Email - Original Digital</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #4A6FDC;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #4A6FDC;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #3a5dba;
+    }
+    .result {
+      margin-top: 30px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #dff0d8;
+      border: 1px solid #d0e9c6;
+      color: #3c763d;
+    }
+    .error {
+      background-color: #f2dede;
+      border: 1px solid #ebcccc;
+      color: #a94442;
+    }
+    .loading {
+      background-color: #f5f5f5;
+      border: 1px solid #e3e3e3;
+      color: #666;
+      text-align: center;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+    .settings {
+      margin-bottom: 30px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #e3e3e3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Teste de Envio de Email - Original Digital</h1>
+  
+  <div class="settings">
+    <div class="form-group">
+      <label for="serverUrl">URL do Servidor:</label>
+      <input type="text" id="serverUrl" value="http://localhost:3000" />
+    </div>
+  </div>
+
+  <form id="emailForm">
+    <div class="form-group">
+      <label for="nome">Nome do Destinatário:</label>
+      <input type="text" id="nome" required placeholder="Ex: João Silva" />
+    </div>
+    
+    <div class="form-group">
+      <label for="email">Email do Destinatário:</label>
+      <input type="email" id="email" required placeholder="Ex: joao.silva@email.com" />
+    </div>
+    
+    <div class="form-group">
+      <label for="senha">Senha Temporária:</label>
+      <input type="text" id="senha" value="Senha123!" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="link">Link de Acesso:</label>
+      <input type="url" id="link" value="https://crm.originaldigital.com.br" required />
+    </div>
+    
+    <button type="submit">Enviar Email</button>
+  </form>
+  
+  <div id="result" style="display: none;" class="result"></div>
+  
+  <script>
+    document.getElementById('emailForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const serverUrl = document.getElementById('serverUrl').value.trim();
+      const nome = document.getElementById('nome').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const link = document.getElementById('link').value.trim();
+      
+      const resultDiv = document.getElementById('result');
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'result loading';
+      resultDiv.innerHTML = 'Enviando email... Por favor, aguarde.';
+      
+      try {
+        const response = await fetch(`${serverUrl}/api/invite`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            nome,
+            email,
+            senha,
+            link
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          resultDiv.className = 'result success';
+          resultDiv.innerHTML = `
+            <h3>Email enviado com sucesso!</h3>
+            <p>O email foi enviado para <strong>${email}</strong> com o nome <strong>${nome}</strong>.</p>
+            <p>ID da mensagem: ${result.data?.messageId || 'N/A'}</p>
+          `;
+        } else {
+          resultDiv.className = 'result error';
+          resultDiv.innerHTML = `
+            <h3>Erro ao enviar o email</h3>
+            <p>${result.message || 'Ocorreu um erro inesperado.'}</p>
+            ${result.error ? `<p><strong>Detalhe:</strong> ${result.error}</p>` : ''}
+            ${result.code ? `<p><strong>Código:</strong> ${result.code}</p>` : ''}
+          `;
+        }
+      } catch (error) {
+        resultDiv.className = 'result error';
+        resultDiv.innerHTML = `
+          <h3>Erro de conexão</h3>
+          <p>Não foi possível conectar ao servidor: ${serverUrl}</p>
+          <p><strong>Erro:</strong> ${error.message}</p>
+          <p>Verifique se o servidor está rodando e se a URL está correta.</p>
+        `;
+      }
+    });
+    
+    // Testar conexão SMTP
+    document.addEventListener('DOMContentLoaded', async function() {
+      const testConnection = async () => {
+        const serverUrl = document.getElementById('serverUrl').value.trim();
+        const resultDiv = document.getElementById('result');
+        
+        try {
+          const response = await fetch(`${serverUrl}/api/smtp-test`);
+          const result = await response.json();
+          
+          resultDiv.style.display = 'block';
+          
+          if (result.success) {
+            resultDiv.className = 'result success';
+            resultDiv.innerHTML = `
+              <h3>Conexão SMTP estabelecida!</h3>
+              <p>O servidor está conectado ao SMTP da Hostgator.</p>
+              <pre>${JSON.stringify(result, null, 2)}</pre>
+            `;
+          } else {
+            resultDiv.className = 'result error';
+            resultDiv.innerHTML = `
+              <h3>Erro na conexão SMTP</h3>
+              <p>${result.message || 'Não foi possível conectar ao servidor SMTP.'}</p>
+              <pre>${JSON.stringify(result, null, 2)}</pre>
+            `;
+          }
+        } catch (error) {
+          resultDiv.style.display = 'block';
+          resultDiv.className = 'result error';
+          resultDiv.innerHTML = `
+            <h3>Erro de conexão</h3>
+            <p>Não foi possível conectar ao servidor: ${serverUrl}</p>
+            <p><strong>Erro:</strong> ${error.message}</p>
+            <p>Verifique se o servidor está rodando e se a URL está correta.</p>
+          `;
+        }
+      };
+      
+      // Verificar a conexão SMTP ao carregar a página
+      try {
+        await testConnection();
+      } catch (error) {
+        console.error('Erro ao testar conexão SMTP:', error);
+      }
+      
+      // Adicionar botão para testar a conexão SMTP manualmente
+      const settingsDiv = document.querySelector('.settings');
+      const testButton = document.createElement('button');
+      testButton.type = 'button';
+      testButton.textContent = 'Testar Conexão SMTP';
+      testButton.style.marginTop = '10px';
+      testButton.onclick = testConnection;
+      settingsDiv.appendChild(testButton);
+    });
+  </script>
+</body>
+</html>
