@@ -111,13 +111,16 @@ export async function getFirestoreUserByEmail(email: string) {
       const userDoc = userQuery.docs[0];
       const userData = userDoc.data() || {};
       console.log("Dados do usuário obtidos do Firestore por email:", { email, userData });
-      // Garantir que as propriedades firstLogin e needsPasswordChange estejam presentes
-      return { 
-        ...userData, 
-        id: userDoc.id,
-        firstLogin: userData.firstLogin ?? true,  // Se não existir, assume que é primeiro login
-        needsPasswordChange: userData.needsPasswordChange ?? true // Se não existir, assume que precisa trocar a senha
-      } as FirestoreUser;
+      
+      // Se as flags não existirem, assumir valores padrão
+      if (userData.firstLogin === undefined) {
+        userData.firstLogin = true;
+      }
+      if (userData.needsPasswordChange === undefined) {
+        userData.needsPasswordChange = true;
+      }
+      
+      return { ...userData, id: userDoc.id } as FirestoreUser;
     }
     
     return null;
