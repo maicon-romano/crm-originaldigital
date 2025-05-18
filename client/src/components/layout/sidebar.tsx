@@ -38,11 +38,25 @@ interface SidebarLinkProps {
 }
 
 const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false }: SidebarLinkProps) => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isStaff } = useAuth();
   
   // Se o link for apenas para admin e o usuário não for admin, não mostra o link
   if (adminOnly && !isAdmin) {
     return null;
+  }
+  
+  // Restrições adicionais para funcionários (staff)
+  if (isStaff && !isAdmin) {
+    // Funcionários não podem acessar usuários, faturas, propostas, despesas e configurações
+    if (
+      href === '/users' || 
+      href === '/invoices' || 
+      href === '/proposals' || 
+      href === '/expenses' ||
+      href === '/settings'
+    ) {
+      return null;
+    }
   }
   
   // Usando o padrão de função render para evitar o aninhamento de <a> dentro de <a>
@@ -125,19 +139,19 @@ export function Sidebar() {
       href: '/proposals',
       icon: <FileText className="h-5 w-5" />,
       text: 'Propostas',
-      adminOnly: false
+      adminOnly: true // Apenas administradores podem ver propostas
     },
     {
       href: '/invoices',
       icon: <File className="h-5 w-5" />,
       text: 'Faturas',
-      adminOnly: false
+      adminOnly: true // Apenas administradores podem ver faturas
     },
     {
       href: '/expenses',
       icon: <BanknoteIcon className="h-5 w-5" />,
       text: 'Despesas',
-      adminOnly: false
+      adminOnly: true // Apenas administradores podem ver despesas
     },
     {
       href: '/support',
@@ -163,7 +177,8 @@ export function Sidebar() {
     {
       href: '/settings',
       icon: <Settings className="h-5 w-5" />,
-      text: 'Configurações'
+      text: 'Configurações',
+      adminOnly: true // Apenas administradores podem acessar configurações
     }
   ];
 
