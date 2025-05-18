@@ -1,0 +1,79 @@
+
+> Objetivo: Corrigir e garantir o fluxo completo de criação de novos usuários com senha temporária + obrigatoriedade de redefinição no primeiro login.
+
+---
+
+### 🧩 Fluxo esperado:
+
+1. **Criação do usuário:**
+
+   * O sistema cria o usuário no Firebase Authentication com e-mail e senha temporária.
+   * O mesmo UID é salvo no Firestore na coleção `usuarios` (ou `clientes`), com os dados:
+
+     ```json
+     {
+       uid: "gerado",
+       nome: "João",
+       email: "joao@empresa.com",
+       role: "usuario",
+       precisa_redefinir_senha: true
+     }
+     ```
+   * Um e-mail de convite é enviado via Resend, contendo as credenciais (e-mail + senha temporária + link de login).
+
+2. **Primeiro login:**
+
+   * O usuário insere o e-mail e a senha temporária no login.
+   * O login **deve funcionar normalmente com Firebase Auth.**
+   * Após o login, o sistema deve buscar no Firestore se:
+
+     ```ts
+     usuario.precisa_redefinir_senha === true
+     ```
+   * Se sim, redirecionar para a página de "Redefinir Senha".
+
+3. **Redefinição de senha:**
+
+   * O usuário cria uma nova senha.
+   * O sistema atualiza a senha no Firebase Auth com:
+
+     ```ts
+     updatePassword(newPassword)
+     ```
+   * Após atualizar com sucesso:
+
+     * Atualiza no Firestore: `precisa_redefinir_senha: false`
+     * Redireciona para o dashboard
+
+---
+
+### ✅ Requisitos e validações
+
+* O login com senha temporária **precisa funcionar no Firebase Auth**
+* Deve haver tratamento para quando o usuário insere a senha errada (mensagem de erro clara)
+* O campo `precisa_redefinir_senha` precisa ser verificado **após login bem-sucedido**
+* A senha nova deve ser atualizada com `updatePassword` (após reautenticação se necessário)
+* O redirecionamento precisa ser controlado com base nesse campo
+* Após o primeiro login, usuários com `precisa_redefinir_senha: false` entram normalmente
+
+---
+
+### 🔍 Possível causa do problema atual:
+
+* O login não está funcionando porque:
+
+  * A senha temporária não está sendo aceita (erro de criação ou envio incorreto)
+  * O campo `precisa_redefinir_senha` não está sendo verificado corretamente após login
+  * O login com Firebase Auth não está sendo concluído com sucesso (sem token válido)
+  * O frontend está tentando redirecionar antes de o Firestore responder
+
+---
+
+### ✅ Ações esperadas:
+
+* Verificar se a senha gerada está sendo realmente salva corretamente no Firebase Auth
+* Validar o login com a senha temporária
+* Garantir que o sistema consulta o Firestore após login para verificar `precisa_redefinir_senha`
+* Redirecionar corretamente baseado nesse campo
+* Permitir redefinir a senha e atualizar tanto no Firebase Auth quanto no Firestore
+ 

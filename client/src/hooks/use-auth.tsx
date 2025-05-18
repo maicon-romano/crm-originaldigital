@@ -16,8 +16,7 @@ interface User {
   role: string;
   userType: 'admin' | 'staff' | 'client';
   clientId?: number;
-  firstLogin?: boolean;
-  needsPasswordChange?: boolean;
+  precisa_redefinir_senha: boolean;
 }
 
 interface AuthContextType {

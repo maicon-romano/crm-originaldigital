@@ -19,8 +19,7 @@ export interface FirestoreUser {
   active: boolean;
   createdAt: number;     // Timestamp
   updatedAt: number;     // Timestamp
-  firstLogin?: boolean;  // Indica se é o primeiro login do usuário
-  needsPasswordChange?: boolean; // Indica se o usuário precisa trocar a senha
+  precisa_redefinir_senha: boolean; // Indica se o usuário precisa trocar a senha no primeiro login
 }
 
 // Inicializar o admin SDK, verificando se já foi inicializado
@@ -89,8 +88,7 @@ export async function getFirestoreUserById(userId: string) {
       return { 
         ...userData, 
         id: userId,
-        firstLogin: userData.firstLogin ?? false,
-        needsPasswordChange: userData.needsPasswordChange ?? false
+        precisa_redefinir_senha: userData.precisa_redefinir_senha ?? false
       } as FirestoreUser;
     }
     
@@ -116,8 +114,7 @@ export async function getFirestoreUserByEmail(email: string) {
       return { 
         ...userData, 
         id: userDoc.id,
-        firstLogin: userData.firstLogin ?? false,
-        needsPasswordChange: userData.needsPasswordChange ?? false
+        precisa_redefinir_senha: userData.precisa_redefinir_senha ?? false
       } as FirestoreUser;
     }
     
