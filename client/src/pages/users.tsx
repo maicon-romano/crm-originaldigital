@@ -329,21 +329,32 @@ export default function UsersPage() {
   };
 
   // Enviar convite por email para novo usuário
-  const sendInvitationEmail = async (user: FirestoreUser) => {
+  const sendInvitation = async (user: FirestoreUser) => {
     try {
+      // Mostrar toast de carregamento
+      toast({
+        title: 'Enviando convite...',
+        description: `Enviando convite para ${user.email}`,
+      });
+      
       // Gerar uma senha temporária para o usuário
       const tempPassword = "Senha123!"; // Senha temporária padrão
       
-      // Importar a função de envio de email 
-      const { sendInvitationEmail } = await import('@/lib/emailjs');
+      // Importar diretamente do módulo atualizado
+      const emailModule = await import('@/lib/emailjs');
+      
+      // Preparar dados para o convite
+      const userRole = user.role === 'admin' ? 'Administrador' : 
+                       user.role === 'usuario' ? 'Usuário' : 'Cliente';
+      
+      console.log(`Enviando convite para ${user.email} com papel ${userRole}`);
       
       // Enviar o email de convite com as credenciais
-      const result = await sendInvitationEmail({
+      const result = await emailModule.sendInvitationEmail({
         to_email: user.email,
         to_name: user.name,
         password: tempPassword,
-        user_role: user.role === 'admin' ? 'Administrador' : 
-                  user.role === 'usuario' ? 'Usuário' : 'Cliente'
+        user_role: userRole
       });
       
       if (result.success) {
@@ -519,7 +530,7 @@ export default function UsersPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => sendInvitationEmail(row.original)}
+            onClick={() => sendInvitation(row.original)}
             title="Enviar Convite"
           >
             <Mail className="h-4 w-4" />
