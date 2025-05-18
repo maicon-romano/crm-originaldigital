@@ -146,13 +146,19 @@ export async function deleteFirestoreUser(userId: string) {
     // 1. Excluir dados do usuário no Firestore
     await usersCollection.doc(userId).delete();
     
-    // 2. Excluir o usuário do Firebase Authentication
-    await admin.auth().deleteUser(userId);
+    // 2. Tentar excluir o usuário do Firebase Authentication
+    try {
+      await admin.auth().deleteUser(userId);
+      console.log(`Usuário ${userId} excluído com sucesso do Authentication`);
+    } catch (authError) {
+      console.error(`Erro ao excluir usuário ${userId} do Authentication:`, authError);
+      // Continuar mesmo se falhar a exclusão do Authentication
+    }
     
-    console.log(`Usuário ${userId} excluído com sucesso do Firestore e Authentication`);
+    console.log(`Usuário ${userId} excluído com sucesso do Firestore`);
     return true;
   } catch (error) {
-    console.error('[Admin API] Erro ao excluir usuário:', error);
+    console.error('[Admin API] Erro ao excluir usuário do Firestore:', error);
     throw error;
   }
 }
