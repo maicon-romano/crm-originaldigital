@@ -1,0 +1,22 @@
+Warning: validateDOMNesting(...): <a> cannot appear as a descendant of <a>.
+    at a
+    at a
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=d8755ed5:337:18
+    at SidebarLink (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/layout/sidebar.tsx:40:24)
+    at div
+    at nav
+    at aside
+    at Sidebar (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/layout/sidebar.tsx:100:22)
+    at div
+    at MainLayout (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/layout/main-layout.tsx:65:30)
+    at Route (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=d8755ed5:323:16)
+    at Switch (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=d8755ed5:379:17)
+    at Router
+    at Provider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-E7IAXTU4.js?v=d8755ed5:38:15)
+    at TooltipProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=d8755ed5:61:5)
+    at AuthProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/hooks/use-auth.tsx:59:32)
+    at QueryClientProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d8755ed5:2805:3)
+    at ThemeProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/ui/theme-provider.tsx:25:3)
+    at App
+printWarning @ chunk-RPCDYKBN.js?v=d8755ed5:521Understand this error
+users.tsx:137 Erro ao buscar usuários: FirebaseError: Missing or insufficient permissions.

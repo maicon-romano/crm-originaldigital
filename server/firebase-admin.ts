@@ -49,8 +49,17 @@ const usersCollection = firestore.collection('usuarios');
 export async function createFirestoreUser(userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>) {
   try {
     const timestamp = Date.now();
+    
+    // Remover campos undefined para evitar erros do Firestore
+    const cleanUserData: Record<string, any> = {};
+    Object.entries(userData).forEach(([key, value]) => {
+      if (value !== undefined) {
+        cleanUserData[key] = value;
+      }
+    });
+    
     const completeData = {
-      ...userData,
+      ...cleanUserData,
       createdAt: timestamp,
       updatedAt: timestamp
     };

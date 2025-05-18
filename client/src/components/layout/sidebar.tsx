@@ -45,9 +45,10 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false 
     return null;
   }
   
+  // Solução usando span em vez de um elemento aninhado mais complexo
   return (
     <Link href={href}>
-      <a
+      <span
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
           isActive
@@ -63,7 +64,7 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false 
           </span>
         )}
         {collapsed && adminOnly && <Shield className="h-3 w-3 absolute right-2 top-2" />}
-      </a>
+      </span>
     </Link>
   );
 };

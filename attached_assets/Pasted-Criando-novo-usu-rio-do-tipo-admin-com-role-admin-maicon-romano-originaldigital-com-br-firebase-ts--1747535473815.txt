@@ -1,0 +1,76 @@
+Criando novo usuário do tipo admin com role admin: maicon.romano@originaldigital.com.br
+firebase.ts:120 
+            
+            
+           POST https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/api/users 500 (Internal Server Error)
+createUser @ firebase.ts:120
+await in createUser
+onSubmit @ users.tsx:185
+(anonymous) @ chunk-4BFJKWC4.js?v=d8755ed5:1465
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js?v=d8755ed5:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=d8755ed5:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=d8755ed5:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=d8755ed5:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=d8755ed5:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=d8755ed5:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=d8755ed5:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=d8755ed5:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=d8755ed5:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=d8755ed5:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=d8755ed5:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=d8755ed5:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=d8755ed5:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=d8755ed5:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=d8755ed5:5449Understand this error
+firebase.ts:145 Erro ao criar usuário: Error: Erro ao salvar usuário no Firestore: Erro ao criar usuário
+    at createUser (firebase.ts:134:13)
+    at async onSubmit (users.tsx:185:32)
+    at async chunk-4BFJKWC4.js?v=d8755ed5:1465:9
+createUser @ firebase.ts:145
+await in createUser
+onSubmit @ users.tsx:185
+(anonymous) @ chunk-4BFJKWC4.js?v=d8755ed5:1465
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js?v=d8755ed5:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=d8755ed5:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=d8755ed5:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=d8755ed5:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=d8755ed5:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=d8755ed5:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=d8755ed5:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=d8755ed5:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=d8755ed5:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=d8755ed5:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=d8755ed5:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=d8755ed5:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=d8755ed5:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=d8755ed5:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=d8755ed5:5449Understand this error
+users.tsx:207 Erro ao criar usuário: Error: Erro ao salvar usuário no Firestore: Erro ao criar usuário
+    at createUser (firebase.ts:134:13)
+    at async onSubmit (users.tsx:185:32)
+    at async chunk-4BFJKWC4.js?v=d8755ed5:1465:9
+onSubmit @ users.tsx:207
+await in onSubmit
+(anonymous) @ chunk-4BFJKWC4.js?v=d8755ed5:1465
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js?v=d8755ed5:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=d8755ed5:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=d8755ed5:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=d8755ed5:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=d8755ed5:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=d8755ed5:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=d8755ed5:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=d8755ed5:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=d8755ed5:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=d8755ed5:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=d8755ed5:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=d8755ed5:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=d8755ed5:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=d8755ed5:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=d8755ed5:5449Understand this error
+firebase_firestore.js?v=d8755ed5:2146 
+            
+            
+           POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fcrm-originaldigital%2Fdatabases%2F(default)&gsessionid=NfSKmocoDBlPH5Nip68kRTrK9mm3K8-aWpZhYTUfI3Q&SID=FuEzWOL3mIy3hU8secgTcg&RID=50185&TYPE=terminate&zx=6u3157hml72b 400 (Bad Request)
