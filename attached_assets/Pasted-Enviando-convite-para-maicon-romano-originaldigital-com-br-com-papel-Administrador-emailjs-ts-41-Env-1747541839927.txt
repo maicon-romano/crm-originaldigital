@@ -1,0 +1,101 @@
+Enviando convite para maicon.romano@originaldigital.com.br com papel Administrador
+emailjs.ts:41 Enviando email de convite para: maicon.romano@originaldigital.com.br
+emailjs.ts:53 Parâmetros do template: {"to_email":"maicon.romano@originaldigital.com.br","to_name":"Maicon Romano","password":"Senha123!","user_role":"Administrador","site_name":"CRM - Original Digital","login_url":"https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/login"}
+emailjs.ts:54 IDs de serviço e template: service_gssy9h5 template_d2v8hoo
+emailjs.ts:59 
+            
+            
+           POST https://api.emailjs.com/api/v1.0/email/send 412 (Precondition Failed)
+sendPost @ @emailjs_browser.js?v=9c32bb99:59
+send @ @emailjs_browser.js?v=9c32bb99:195
+await in send
+sendInvitationEmail @ emailjs.ts:59
+sendInvitation @ users.tsx:362
+await in sendInvitation
+onClick @ users.tsx:561
+callCallback2 @ chunk-RPCDYKBN.js?v=9c32bb99:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=9c32bb99:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=9c32bb99:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=9c32bb99:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=9c32bb99:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=9c32bb99:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=9c32bb99:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=9c32bb99:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=9c32bb99:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=9c32bb99:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=9c32bb99:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=9c32bb99:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=9c32bb99:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=9c32bb99:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=9c32bb99:5449Understand this error
+emailjs.ts:72 Erro no primeiro método de envio: EmailJSResponseStatus {status: 412, text: 'SMTP: Connection timeout'}status: 412text: "SMTP: Connection timeout"[[Prototype]]: Object
+sendInvitationEmail @ emailjs.ts:72
+await in sendInvitationEmail
+sendInvitation @ users.tsx:362
+await in sendInvitation
+onClick @ users.tsx:561
+callCallback2 @ chunk-RPCDYKBN.js?v=9c32bb99:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=9c32bb99:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=9c32bb99:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=9c32bb99:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=9c32bb99:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=9c32bb99:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=9c32bb99:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=9c32bb99:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=9c32bb99:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=9c32bb99:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=9c32bb99:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=9c32bb99:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=9c32bb99:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=9c32bb99:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=9c32bb99:5449Understand this warning
+emailjs.ts:87 
+            
+            
+           POST https://api.emailjs.com/api/v1.0/email/send-form 412 (Precondition Failed)
+sendPost @ @emailjs_browser.js?v=9c32bb99:59
+sendForm @ @emailjs_browser.js?v=9c32bb99:235
+await in sendForm
+sendInvitationEmail @ emailjs.ts:87
+await in sendInvitationEmail
+sendInvitation @ users.tsx:362
+await in sendInvitation
+onClick @ users.tsx:561
+callCallback2 @ chunk-RPCDYKBN.js?v=9c32bb99:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=9c32bb99:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=9c32bb99:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=9c32bb99:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=9c32bb99:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=9c32bb99:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=9c32bb99:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=9c32bb99:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=9c32bb99:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=9c32bb99:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=9c32bb99:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=9c32bb99:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=9c32bb99:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=9c32bb99:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=9c32bb99:5449Understand this error
+emailjs.ts:97 Erro ao enviar email de convite: EmailJSResponseStatus {status: 412, text: 'SMTP: Connection timeout'}
+sendInvitationEmail @ emailjs.ts:97
+await in sendInvitationEmail
+sendInvitation @ users.tsx:362
+await in sendInvitation
+onClick @ users.tsx:561
+callCallback2 @ chunk-RPCDYKBN.js?v=9c32bb99:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=9c32bb99:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=9c32bb99:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=9c32bb99:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=9c32bb99:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=9c32bb99:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=9c32bb99:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=9c32bb99:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=9c32bb99:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=9c32bb99:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=9c32bb99:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=9c32bb99:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=9c32bb99:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=9c32bb99:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=9c32bb99:5449Understand this error
+users.tsx:379 Erro ao enviar convite: Error: Falha ao enviar convite: {"status":412,"text":"SMTP: Connection timeout"}
+    at sendInvitation (users.tsx:376:15)
