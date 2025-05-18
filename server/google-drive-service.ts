@@ -71,12 +71,12 @@ async function getAuthClient() {
  * @param parentFolderId ID da pasta pai (opcional)
  * @returns ID da pasta criada ou undefined se falhar
  */
-async function createFolder(auth: JWT, folderName: string, parentFolderId?: string): Promise<string | undefined> {
+async function createFolder(auth: JWT, folderName: string, parentFolderId: string): Promise<string> {
   try {
     const drive = google.drive({ version: 'v3', auth });
 
     // Verificar se a pasta já existe para evitar duplicação
-    if (parentFolderId) {
+    try {
       const response = await drive.files.list({
         q: `name='${folderName}' and '${parentFolderId}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder'`,
         fields: 'files(id, name)',
@@ -85,16 +85,24 @@ async function createFolder(auth: JWT, folderName: string, parentFolderId?: stri
 
       if (response.data.files && response.data.files.length > 0) {
         console.log(`Pasta "${folderName}" já existe, reutilizando o ID existente`);
-        return response.data.files[0].id;
+        const fileId = response.data.files[0].id || '';
+        return fileId;
       }
+    } catch (listError) {
+      console.warn(`Erro ao verificar se a pasta ${folderName} já existe:`, listError);
+      // Continue para tentar criar a pasta mesmo assim
     }
 
     // Criar nova pasta
-    const fileMetadata = {
+    const fileMetadata: any = {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
-      parents: parentFolderId ? [parentFolderId] : undefined,
     };
+    
+    // Adicionar parentFolderId apenas se estiver definido
+    if (parentFolderId) {
+      fileMetadata.parents = [parentFolderId];
+    }
 
     const file = await drive.files.create({
       requestBody: fileMetadata,
@@ -102,15 +110,17 @@ async function createFolder(auth: JWT, folderName: string, parentFolderId?: stri
     });
 
     console.log(`Pasta "${folderName}" criada com sucesso, ID: ${file.data.id}`);
-    return file.data.id;
+    const fileId = file.data.id || '';
+    return fileId;
   } catch (error) {
     console.error(`Erro ao criar pasta "${folderName}":`, error);
-    throw error;
+    return '';
   }
 }
 
 /**
  * Cria todas as pastas necessárias para um novo cliente
+ * Esta função cria uma pasta principal com o nome do cliente e várias subpastas padrão dentro dela
  * @param clientName Nome da empresa do cliente
  * @returns ID da pasta principal do cliente
  */
