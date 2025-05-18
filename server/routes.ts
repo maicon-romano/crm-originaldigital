@@ -12,7 +12,7 @@ import {
   deleteFirestoreUser,
   FirestoreUser 
 } from './firebase-admin';
-import { sendInvitationEmail, sendPasswordResetEmail } from './email';
+import { sendInvitationEmail, verifyEmailConnection } from './email-service';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Rotas de gerenciamento de usuários no Firestore
