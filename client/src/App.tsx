@@ -21,6 +21,7 @@ import CalendarPage from "@/pages/calendar";
 import SettingsPage from "@/pages/settings";
 import UsersPage from "@/pages/users";
 import ProfilePage from "@/pages/profile";
+import ChangePasswordPage from "@/pages/change-password";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
 import { ReactNode, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -65,41 +66,78 @@ function AdminRoute({ children }: AdminRouteProps) {
   return <>{children}</>;
 }
 
+// Componente para verificar se o usuário precisa trocar a senha
+interface PasswordCheckProps {
+  children: ReactNode;
+}
+
+function PasswordCheck({ children }: PasswordCheckProps) {
+  const { user, isLoading, needsPasswordChange } = useAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    // Se o usuário estiver logado e precisar trocar a senha, redireciona
+    if (!isLoading && user && needsPasswordChange) {
+      navigate("/change-password");
+    }
+  }, [isLoading, user, needsPasswordChange, navigate]);
+
+  // Se o usuário precisa trocar a senha, não renderiza nada (será redirecionado)
+  if (user && needsPasswordChange) {
+    return null;
+  }
+
+  // Caso contrário, renderiza o conteúdo normalmente
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
       
+      <Route path="/change-password" component={ChangePasswordPage} />
+      
       <Route path="/">
-        <MainLayout>
-          <Dashboard />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <Dashboard />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/dashboard">
-        <MainLayout>
-          <Dashboard />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <Dashboard />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/clients">
-        <MainLayout>
-          <ClientsPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <ClientsPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/clients/:id">
         {params => (
-          <MainLayout>
-            <ClientDetailPage id={params.id} />
-          </MainLayout>
+          <PasswordCheck>
+            <MainLayout>
+              <ClientDetailPage id={params.id} />
+            </MainLayout>
+          </PasswordCheck>
         )}
       </Route>
       
       <Route path="/projects">
-        <MainLayout>
-          <ProjectsPage />
-        </MainLayout>
+        <PasswordCheck>
+          <MainLayout>
+            <ProjectsPage />
+          </MainLayout>
+        </PasswordCheck>
       </Route>
       
       <Route path="/projects/:id">

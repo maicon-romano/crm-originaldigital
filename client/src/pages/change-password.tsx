@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -46,7 +46,7 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 export default function ChangePasswordPage() {
   const { user, needsPasswordChange, updateUserAfterPasswordChange } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   
   // Formulário com validação
   const form = useForm<PasswordFormData>({
