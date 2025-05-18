@@ -16,6 +16,8 @@ interface User {
   role: string;
   userType: 'admin' | 'staff' | 'client';
   clientId?: number;
+  firstLogin?: boolean;
+  needsPasswordChange?: boolean;
 }
 
 interface AuthContextType {
@@ -27,6 +29,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isStaff: boolean;
   isClient: boolean;
+  needsPasswordChange: boolean;
+  updateUserAfterPasswordChange: () => Promise<void>;
 }
 
 // Converter usuário do Firebase + Firestore para nosso modelo de usuário
@@ -42,7 +46,9 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
       email: firestoreUser.email,
       role: firestoreUser.role,
       userType: firestoreUser.userType,
-      clientId: firestoreUser.clientId
+      clientId: firestoreUser.clientId,
+      firstLogin: firestoreUser.firstLogin,
+      needsPasswordChange: firestoreUser.needsPasswordChange
     };
   }
   
@@ -68,6 +74,8 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   isStaff: false,
   isClient: false,
+  needsPasswordChange: false,
+  updateUserAfterPasswordChange: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -125,6 +133,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const isAuthenticated = !!user;
   
+  // Verificar se o usuário precisa trocar a senha
+  const needsPasswordChange = !!user?.needsPasswordChange;
+  
+  // Função para atualizar o usuário após mudar a senha
+  const updateUserAfterPasswordChange = async (): Promise<void> => {
+    if (user?.id) {
+      try {
+        // Atualizar o usuário no Firestore para remover a flag de troca de senha
+        await fetch(`/api/firestore/users/${user.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            needsPasswordChange: false,
+            firstLogin: false
+          })
+        });
+        
+        // Recarregar os dados do usuário
+        if (auth.currentUser) {
+          const updatedUser = await mapFirebaseUserToUser(auth.currentUser);
+          setUser(updatedUser);
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar status de senha do usuário:', error);
+      }
+    }
+  };
+  
   // Verificadores de tipo de usuário
   // Considera admin tanto o usuário específico (ADMIN_UID) quanto qualquer usuário com userType 'admin' ou role 'admin'
   const isAdmin = user?.id === ADMIN_UID || user?.userType === 'admin' || user?.role === 'admin';
@@ -140,7 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isAdmin,
       isStaff,
-      isClient
+      isClient,
+      needsPasswordChange,
+      updateUserAfterPasswordChange
     }}>
       {children}
     </AuthContext.Provider>
