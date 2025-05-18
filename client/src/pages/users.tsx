@@ -344,6 +344,7 @@ export default function UsersPage() {
       toast({
         title: 'Enviando convite...',
         description: `Enviando convite para ${user.email}`,
+        duration: 5000, // 5 segundos
       });
       
       // Gerar uma senha temporária para o usuário
@@ -353,9 +354,12 @@ export default function UsersPage() {
       const userRole = user.role === 'admin' ? 'Administrador' : 
                      user.role === 'usuario' ? 'Usuário' : 'Cliente';
       
-      console.log(`Enviando convite via backend para ${user.email} com papel ${userRole}`);
+      console.log(`Enviando convite para ${user.email} com papel ${userRole}`);
       
-      // Chamar a API do backend para enviar o email
+      // Chamar a API do backend para enviar o email com timeout de 15 segundos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos
+      
       const response = await fetch('/api/email/send-invitation', {
         method: 'POST',
         headers: {
@@ -367,41 +371,64 @@ export default function UsersPage() {
           password: tempPassword,
           role: userRole
         }),
+        signal: controller.signal,
       });
       
-      const result = await response.json();
+      // Limpar o timeout
+      clearTimeout(timeoutId);
       
-      if (response.ok && result.success) {
-        // Mostrar toast de sucesso
-        toast({
-          title: 'Convite enviado com sucesso!',
-          description: `Email enviado para ${user.email} com as credenciais de acesso`,
-        });
-      } else {
-        throw new Error(result.message || 'Erro ao enviar convite');
+      // Processar a resposta
+      try {
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          // Mostrar toast de sucesso
+          toast({
+            title: 'Convite enviado com sucesso!',
+            description: `Email enviado para ${user.email} com as credenciais de acesso`,
+          });
+        } else {
+          throw new Error(result.message || 'Erro ao enviar convite');
+        }
+      } catch (jsonError) {
+        // Erro ao processar JSON - provavelmente resposta não é JSON
+        throw new Error('Formato de resposta inválido do servidor');
       }
     } catch (error: any) {
       console.error('Erro ao enviar convite:', error);
       
-      // Extrair mensagem de erro de forma adequada
-      let errorMessage = 'Ocorreu um erro ao enviar o convite';
-      
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (typeof error === 'object') {
-        try {
-          errorMessage = JSON.stringify(error);
-        } catch (e) {
-          errorMessage = 'Erro desconhecido no envio do convite';
+      // Tratamento específico para erro de timeout
+      if (error.name === 'AbortError') {
+        // Mostrar feedback mais amigável quando ocorrer timeout
+        toast({
+          title: 'Tempo de envio excedido',
+          description: `O envio para ${user.email} demorou mais que o esperado. O email pode ter sido enviado, mas não recebemos confirmação.`,
+          variant: 'destructive',
+        });
+        
+        // Aqui você pode registrar uma entrada de log com a tentativa de envio
+        console.log(`Timeout ao enviar convite para ${user.email} - possível problema de rede ou SMTP`);
+      } else {
+        // Extrair mensagem de erro de forma adequada para outros erros
+        let errorMessage = 'Ocorreu um erro ao enviar o convite';
+        
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'object') {
+          try {
+            errorMessage = JSON.stringify(error);
+          } catch (e) {
+            errorMessage = 'Erro desconhecido no envio do convite';
+          }
         }
+        
+        // Mostrar mensagem de erro mais amigável
+        toast({
+          title: 'Erro ao enviar convite',
+          description: errorMessage,
+          variant: 'destructive',
+        });
       }
-      
-      // Mostrar mensagem de erro mais amigável
-      toast({
-        title: 'Erro ao enviar convite',
-        description: errorMessage,
-        variant: 'destructive',
-      });
     } finally {
       // Sempre limpar o estado de envio no final
       setSendingInvite(null);

@@ -8,7 +8,11 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: 'suporte@originaldigital.com.br',
     pass: 'Original.280712'
-  }
+  },
+  // Configurar um timeout mais curto (10 segundos) para evitar esperas muito longas
+  connectionTimeout: 10000, // 10 segundos
+  // Debug mode = true
+  debug: true
 });
 
 interface InvitationEmailData {
