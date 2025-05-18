@@ -77,9 +77,9 @@ async function getAuthClient() {
  * @param auth Cliente de autenticação
  * @param folderName Nome da pasta
  * @param parentFolderId ID da pasta pai (opcional)
- * @returns ID da pasta criada
+ * @returns ID da pasta criada ou undefined se falhar
  */
-async function createFolder(auth: JWT, folderName: string, parentFolderId?: string) {
+async function createFolder(auth: JWT, folderName: string, parentFolderId?: string): Promise<string | undefined> {
   try {
     const drive = google.drive({ version: 'v3', auth });
 
@@ -129,14 +129,14 @@ export async function createClientFolderStructure(clientName: string): Promise<s
     const auth = await getAuthClient();
     
     // 1. Criar pasta principal do cliente
-    const clientFolderId = await createFolder(auth, clientName, CLIENTES_FOLDER_ID);
+    const clientFolderId = await createFolder(auth, clientName, CLIENTES_FOLDER_ID || "");
     
     // 2. Criar subpastas principais
     for (const folderName of FOLDER_STRUCTURE) {
       const folderId = await createFolder(auth, folderName, clientFolderId);
       
       // 3. Criar subpastas dentro da pasta "06 - Criativos"
-      if (folderName === '06 - Criativos') {
+      if (folderName === '06 - Criativos' && folderId) {
         for (const subfolderName of CREATIVE_SUBFOLDERS) {
           await createFolder(auth, subfolderName, folderId);
         }
