@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
 
 import {
   Card,
@@ -47,6 +48,21 @@ export default function ChangePasswordPage() {
   const { user, precisa_redefinir_senha, updateUserAfterPasswordChange } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, navigate] = useLocation();
+  
+  // Estados para controlar a visibilidade das senhas
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Estados para validação de requisitos de senha
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+    matches: false
+  });
   
   // Formulário com validação
   const form = useForm<PasswordFormData>({
@@ -137,13 +153,22 @@ export default function ChangePasswordPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Senha Atual</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Digite sua senha atual" 
-                        {...field} 
-                      />
-                    </FormControl>
+                    <div className="relative">
+                      <FormControl>
+                        <Input 
+                          type={showCurrentPassword ? "text" : "password"} 
+                          placeholder="Digite sua senha atual" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <button 
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      >
+                        {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -155,13 +180,22 @@ export default function ChangePasswordPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nova Senha</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Digite sua nova senha" 
-                        {...field} 
-                      />
-                    </FormControl>
+                    <div className="relative">
+                      <FormControl>
+                        <Input 
+                          type={showNewPassword ? "text" : "password"} 
+                          placeholder="Digite sua nova senha" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <button 
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -173,26 +207,54 @@ export default function ChangePasswordPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Confirmar Nova Senha</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Confirme sua nova senha" 
-                        {...field} 
-                      />
-                    </FormControl>
+                    <div className="relative">
+                      <FormControl>
+                        <Input 
+                          type={showConfirmPassword ? "text" : "password"} 
+                          placeholder="Confirme sua nova senha" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <button 
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              <div className="mt-2">
-                <p className="text-xs text-gray-500 mb-2">A senha deve conter:</p>
-                <ul className="text-xs text-gray-500 list-disc list-inside space-y-1">
-                  <li>Pelo menos 8 caracteres</li>
-                  <li>Pelo menos uma letra maiúscula</li>
-                  <li>Pelo menos uma letra minúscula</li>
-                  <li>Pelo menos um número</li>
-                  <li>Pelo menos um caractere especial</li>
+              <div className="mt-4 mb-4">
+                <p className="text-sm font-medium mb-2">Requisitos de senha:</p>
+                <ul className="space-y-2">
+                  <li className={`text-xs flex items-center ${passwordRequirements.minLength ? 'text-green-600' : 'text-red-500'}`}>
+                    {passwordRequirements.minLength ? <Check size={16} className="mr-2" /> : <X size={16} className="mr-2" />}
+                    Pelo menos 8 caracteres
+                  </li>
+                  <li className={`text-xs flex items-center ${passwordRequirements.hasUppercase ? 'text-green-600' : 'text-red-500'}`}>
+                    {passwordRequirements.hasUppercase ? <Check size={16} className="mr-2" /> : <X size={16} className="mr-2" />}
+                    Pelo menos uma letra maiúscula
+                  </li>
+                  <li className={`text-xs flex items-center ${passwordRequirements.hasLowercase ? 'text-green-600' : 'text-red-500'}`}>
+                    {passwordRequirements.hasLowercase ? <Check size={16} className="mr-2" /> : <X size={16} className="mr-2" />}
+                    Pelo menos uma letra minúscula
+                  </li>
+                  <li className={`text-xs flex items-center ${passwordRequirements.hasNumber ? 'text-green-600' : 'text-red-500'}`}>
+                    {passwordRequirements.hasNumber ? <Check size={16} className="mr-2" /> : <X size={16} className="mr-2" />}
+                    Pelo menos um número
+                  </li>
+                  <li className={`text-xs flex items-center ${passwordRequirements.hasSpecialChar ? 'text-green-600' : 'text-red-500'}`}>
+                    {passwordRequirements.hasSpecialChar ? <Check size={16} className="mr-2" /> : <X size={16} className="mr-2" />}
+                    Pelo menos um caractere especial
+                  </li>
+                  <li className={`text-xs flex items-center ${passwordRequirements.matches ? 'text-green-600' : 'text-red-500'}`}>
+                    {passwordRequirements.matches ? <Check size={16} className="mr-2" /> : <X size={16} className="mr-2" />}
+                    As senhas coincidem
+                  </li>
                 </ul>
               </div>
               
