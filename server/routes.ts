@@ -140,6 +140,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log mais detalhado dos dados recebidos para depuração
       console.log("Dados completos recebidos para criação de usuário:", JSON.stringify(userData, null, 2));
       
+      // Garantir que o cargo seja salvo corretamente como position
+      const position = userData.cargo || userData.position;
+      console.log("Valor do cargo/position a ser salvo:", position);
+      
       // Criar o usuário no Firestore
       const newUser = await createFirestoreUser({
         id: userData.firebaseUid,
@@ -150,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userType: userData.userType || 'staff',
         active: true,
         phone: userData.phone,
-        position: userData.cargo || userData.position, // Aceitar tanto cargo quanto position
+        position, // Garantir que o campo position seja salvo
         clientId: userData.clientId,
         department: userData.department
       });

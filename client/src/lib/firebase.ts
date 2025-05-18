@@ -112,9 +112,18 @@ export const createUser = async (
       role: role,
       active: true,
       createdAt: timestamp,
-      updatedAt: timestamp,
-      ...extraData // Adicionar campos extras ao objeto básico
+      updatedAt: timestamp
     };
+    
+    // Extrair campos específicos de extraData
+    if (extraData) {
+      if (extraData.position) userData.position = extraData.position;
+      if (extraData.phone) userData.phone = extraData.phone;
+      if (extraData.clientId) userData.clientId = extraData.clientId;
+      // Adicionar outros campos relevantes
+    }
+    
+    console.log('Dados do usuário sendo enviados para API:', JSON.stringify(userData));
     
     // Enviar dados para o servidor via API POST para salvar no Firestore com permissões elevadas
     const response = await fetch('/api/users', {
