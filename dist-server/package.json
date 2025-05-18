@@ -1,0 +1,28 @@
+{
+  "name": "email-server-original-digital",
+  "version": "1.0.0",
+  "description": "Servidor de envio de emails para o CRM Original Digital",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test-email-server.js"
+  },
+  "keywords": [
+    "email",
+    "smtp",
+    "crm",
+    "convite"
+  ],
+  "author": "Original Digital",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7",
+    "nodemailer": "^6.9.9"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
