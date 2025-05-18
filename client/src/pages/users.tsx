@@ -102,6 +102,9 @@ export default function UsersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
+  // Senha temporária padrão para novos usuários
+  const DEFAULT_TEMP_PASSWORD = "Senha123!";
+  
   // Carregar lista de clientes para associar a usuários do tipo 'client'
   const { data: clients = [] } = useQuery<{ id: number, companyName: string }[]>({
     queryKey: ['/api/clients'],
@@ -327,9 +330,6 @@ export default function UsersPage() {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
   };
-
-  // Estado para controlar o envio de convites
-  const [sendingInvite, setSendingInvite] = useState<string | null>(null);
 
   // Enviar convite por email para novo usuário usando o backend
   const sendInvitation = async (user: FirestoreUser) => {
