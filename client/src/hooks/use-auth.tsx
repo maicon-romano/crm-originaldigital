@@ -106,12 +106,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
   
-  // Função de login com Firebase
+  // Função de login com Firebase - Melhorada para lidar com primeiro login
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const firebaseUser = await loginWithEmailAndPassword(email, password);
       
       if (firebaseUser) {
+        // Buscar dados do usuário no Firestore para verificar se é primeiro login
+        const userDoc = await getFirestoreUserById(firebaseUser.uid);
+        
+        // Se é o primeiro login, o usuário será redirecionado automaticamente 
+        // pelo componente PasswordCheck para a página de troca de senha
+        
         // Não precisamos definir o usuário aqui, pois o onAuthStateChanged será disparado
         return true;
       }

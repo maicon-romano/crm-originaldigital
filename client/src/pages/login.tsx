@@ -100,12 +100,12 @@ export default function Login() {
       
       const success = await login(values.email, values.password);
       if (success) {
-        // Forçar navegação direta para o dashboard
-        window.location.href = '/dashboard';
-        
+        // Se for primeiro login ou precisar trocar a senha, redireciona para a página de troca de senha
+        // O redirecionamento será feito automaticamente pelo componente PasswordCheck
+        // que está implementado em App.tsx
         toast({
           title: 'Login bem-sucedido',
-          description: 'Bem-vindo ao seu painel CRM!',
+          description: 'Bem-vindo ao CRM Original Digital!',
         });
       } else {
         toast({
