@@ -84,15 +84,14 @@ export async function getFirestoreUserById(userId: string) {
       // Log para depuração
       console.log("Dados do usuário obtidos do Firestore:", { userId, userData });
       
-      // Se as flags não existirem, assumir valores padrão
-      if (userData.firstLogin === undefined) {
-        userData.firstLogin = true;
-      }
-      if (userData.needsPasswordChange === undefined) {
-        userData.needsPasswordChange = true;
-      }
-      
-      return { ...userData, id: userId } as FirestoreUser;
+      // Para usuários existentes, manter o valor salvo no Firestore
+      // ou definir como false se não existir (usuários antigos já estão usando o sistema)
+      return { 
+        ...userData, 
+        id: userId,
+        firstLogin: userData.firstLogin ?? false,
+        needsPasswordChange: userData.needsPasswordChange ?? false
+      } as FirestoreUser;
     }
     
     return null;
@@ -112,15 +111,14 @@ export async function getFirestoreUserByEmail(email: string) {
       const userData = userDoc.data() || {};
       console.log("Dados do usuário obtidos do Firestore por email:", { email, userData });
       
-      // Se as flags não existirem, assumir valores padrão
-      if (userData.firstLogin === undefined) {
-        userData.firstLogin = true;
-      }
-      if (userData.needsPasswordChange === undefined) {
-        userData.needsPasswordChange = true;
-      }
-      
-      return { ...userData, id: userDoc.id } as FirestoreUser;
+      // Para usuários existentes, manter o valor salvo no Firestore
+      // ou definir como false se não existir (usuários antigos já estão usando o sistema)
+      return { 
+        ...userData, 
+        id: userDoc.id,
+        firstLogin: userData.firstLogin ?? false,
+        needsPasswordChange: userData.needsPasswordChange ?? false
+      } as FirestoreUser;
     }
     
     return null;
