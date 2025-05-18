@@ -187,10 +187,10 @@ export default function UsersPage() {
             clientId: values.clientId
           });
           
-          // Usar createUser para criar usuário no Auth e Firestore
+          // Usar createUser para criar usuário no Auth e Firestore com senha temporária padrão
           const firebaseUser = await createUser(
             values.email, 
-            values.password || "Senha123!", 
+            DEFAULT_TEMP_PASSWORD, // Sempre usar a senha temporária padrão
             values.name,
             userType,
             values.role,
@@ -201,9 +201,12 @@ export default function UsersPage() {
             }
           );
           
+          // Enviar convite automaticamente após a criação
+          await sendInvitation(firebaseUser);
+          
           toast({
             title: 'Usuário criado',
-            description: 'O usuário foi criado com sucesso',
+            description: 'O usuário foi criado com sucesso e um convite foi enviado para o email cadastrado',
           });
           
           // Recarregar a lista de usuários

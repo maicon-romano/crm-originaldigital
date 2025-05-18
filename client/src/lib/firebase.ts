@@ -83,10 +83,11 @@ export const createUser = async (
   displayName: string,
   userType: UserType = 'staff',
   role: 'admin' | 'usuario' | 'cliente' = 'usuario', // role padrão no Firestore
-  extraData: Partial<FirestoreUser> = {}
+  extraData: Partial<FirestoreUser> = {},
+  requirePasswordChange: boolean = true // Novo parâmetro para indicar se deve solicitar troca de senha
 ): Promise<FirestoreUser> => {
   try {
-    console.log(`Criando novo usuário do tipo ${userType} com role ${role}: ${email}`);
+    console.log(`Criando novo usuário do tipo ${userType} com role ${role}: ${email} (Senha temporária: ${password})`);
     
     // Criar um app temporário para criar o usuário sem deslogar o atual
     const tempApp = initializeApp(firebaseConfig, 'tempApp-' + new Date().getTime());
@@ -111,6 +112,8 @@ export const createUser = async (
       userType: userType,
       role: role,
       active: true,
+      firstLogin: true, // Marcar como primeiro login para solicitar troca de senha
+      needsPasswordChange: requirePasswordChange, // Flag para indicar que precisa trocar a senha
       createdAt: timestamp,
       updatedAt: timestamp
     };
