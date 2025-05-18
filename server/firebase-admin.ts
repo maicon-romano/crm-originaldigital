@@ -53,27 +53,27 @@ export interface FirestoreClient {
   companyName: string;    // Nome da empresa
   contactName: string;    // Nome do contato
   email: string;          // Email do contato
-  phone?: string;         // Telefone
+  phone: string;          // Telefone
   cnpjCpf: string;        // CNPJ ou CPF
   address: string;        // Endereço
   city: string;           // Cidade
   state: string;          // Estado
-  website?: string;       // Site
-  instagram?: string;     // Instagram
-  facebook?: string;      // Facebook
-  linkedin?: string;      // LinkedIn
-  youtube?: string;       // YouTube
-  tiktok?: string;        // TikTok
-  paymentDay?: string;    // Dia do pagamento
-  contractValue?: string; // Valor do contrato
+  website: string;        // Site
+  instagram: string;      // Instagram
+  facebook: string;       // Facebook
+  linkedin: string;       // LinkedIn
+  youtube: string;        // YouTube
+  tiktok: string;         // TikTok
+  paymentDay: string;     // Dia do pagamento
+  contractValue: string;  // Valor do contrato
   contractStart: string;  // Data de início do contrato
-  contractEnd?: string;   // Data de término do contrato
-  category?: string;      // Categoria
-  description?: string;   // Cargo do contato ou descrição
-  observations?: string;  // Observações
+  contractEnd: string;    // Data de término do contrato
+  category: string;       // Categoria
+  description: string;    // Cargo do contato ou descrição
+  observations: string;   // Observações
   status: string;         // Status: active, paused, closed
-  paymentMethod?: string; // Método de pagamento
-  servicesPlatforms?: string; // Plataformas de serviço
+  paymentMethod: string;  // Método de pagamento
+  servicesPlatforms: string; // Plataformas de serviço
   googleDriveFolderId?: string; // ID da pasta no Google Drive
   userId?: string;        // ID do usuário associado (se existir)
   createdAt: number;      // Timestamp

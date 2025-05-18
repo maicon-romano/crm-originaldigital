@@ -381,16 +381,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertClientSchema.parse(req.body);
       
-      // Criar o cliente no banco de dados
+      // 1. Criar o cliente no banco de dados relacional
       const client = await storage.createClient(validatedData);
+      console.log(`Cliente criado no banco relacional com ID: ${client.id}`);
       
-      // Criar estrutura de pastas no Google Drive após criar o cliente
+      // 2. Criar o registro no Firestore (coleção 'clientes')
+      let firestoreClientId = null;
+      let firestoreUserId = null;
+      
       try {
+        // Dados para o Firestore
+        const firestoreClientData: Omit<FirestoreClient, 'createdAt' | 'updatedAt'> = {
+          companyName: validatedData.companyName,
+          contactName: validatedData.contactName,
+          email: validatedData.email,
+          phone: validatedData.phone || '',
+          cnpjCpf: validatedData.cnpjCpf || '',
+          address: validatedData.address || '',
+          city: validatedData.city || '',
+          state: validatedData.state || '',
+          website: validatedData.website || '',
+          instagram: validatedData.instagram || '',
+          facebook: validatedData.facebook || '',
+          linkedin: validatedData.linkedin || '',
+          youtube: validatedData.youtube || '',
+          tiktok: validatedData.tiktok || '',
+          paymentDay: validatedData.paymentDay || '',
+          contractValue: validatedData.contractValue || '',
+          contractStart: validatedData.contractStart || new Date().toISOString().split('T')[0],
+          contractEnd: validatedData.contractEnd || '',
+          category: validatedData.category || '',
+          description: validatedData.description || '',
+          observations: validatedData.observations || '',
+          status: validatedData.status || 'active',
+          paymentMethod: validatedData.paymentMethod || '',
+          servicesPlatforms: validatedData.servicesPlatforms || '',
+        };
+        
+        // Criar o cliente no Firestore
+        const firestoreClient = await createFirestoreClient(firestoreClientData);
+        firestoreClientId = firestoreClient.id;
+        console.log(`Cliente criado no Firestore com ID: ${firestoreClientId}`);
+        
+        // 3. Criar um usuário do tipo cliente
+        try {
+          // Gerar senha temporária aleatória
+          const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+          
+          // Criar usuário no Firebase Authentication
+          console.log(`Criando usuário no Firebase Auth para email: ${validatedData.email}`);
+          const userRecord = await admin.auth().createUser({
+            email: validatedData.email,
+            password: tempPassword,
+            displayName: validatedData.contactName,
+            emailVerified: false,
+          });
+          
+          // Criar perfil do usuário no Firestore
+          const userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'> = {
+            id: userRecord.uid,
+            username: validatedData.email.split('@')[0],
+            name: validatedData.contactName,
+            email: validatedData.email,
+            phone: validatedData.phone || '',
+            userType: 'client',
+            role: 'cliente',
+            position: validatedData.description || '',
+            clientId: client.id,
+            active: true,
+            precisa_redefinir_senha: true
+          };
+          
+          // Salvar o usuário no Firestore
+          await createFirestoreUser(userData);
+          firestoreUserId = userRecord.uid;
+          console.log(`Usuário cliente criado com ID: ${firestoreUserId}`);
+          
+          // Atualizar o cliente no Firestore com o ID do usuário
+          if (firestoreClientId) {
+            await updateFirestoreClient(firestoreClientId, { userId: firestoreUserId });
+            console.log(`Cliente no Firestore atualizado com userId: ${firestoreUserId}`);
+          }
+          
+          // Enviar email de convite com senha temporária
+          try {
+            console.log(`Enviando email de convite para: ${validatedData.email}`);
+            await sendInvitationEmail({
+              to: validatedData.email,
+              name: validatedData.contactName,
+              password: tempPassword,
+              role: 'Cliente'
+            });
+            console.log(`Email de convite enviado para ${validatedData.email}`);
+          } catch (emailError) {
+            console.error('Erro ao enviar email de convite:', emailError);
+          }
+        } catch (userError) {
+          console.error('Erro ao criar usuário para o cliente:', userError);
+        }
+      } catch (firestoreError) {
+        console.error('Erro ao criar cliente no Firestore:', firestoreError);
+      }
+      
+      // 4. Criar estrutura de pastas no Google Drive
+      try {
+        console.log(`Iniciando criação de pastas no Google Drive para: ${validatedData.companyName}`);
         const folderId = await createClientFolderStructure(validatedData.companyName);
         
         if (folderId) {
-          // Atualizar o cliente com o ID da pasta do Google Drive
+          // Atualizar o cliente com o ID da pasta do Google Drive no banco relacional
           await storage.updateClient(client.id, { googleDriveFolderId: folderId });
+          
+          // Atualizar o cliente no Firestore
+          if (firestoreClientId) {
+            await updateFirestoreClient(firestoreClientId, { googleDriveFolderId: folderId });
+          }
           
           // Atualizar o objeto client para a resposta
           client.googleDriveFolderId = folderId;
@@ -400,10 +505,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.warn(`Não foi possível criar a estrutura de pastas para o cliente ${validatedData.companyName}`);
         }
       } catch (driveError) {
-        // Mesmo que haja erro ao criar as pastas, não impedimos a criação do cliente
         console.error("Erro ao criar estrutura de pastas no Google Drive:", driveError);
       }
       
+      // Retornar o cliente criado
       return res.status(201).json(client);
     } catch (error) {
       if (error instanceof z.ZodError) {

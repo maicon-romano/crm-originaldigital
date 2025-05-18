@@ -33,47 +33,31 @@ const CREATIVE_SUBFOLDERS = [
  */
 async function getAuthClient() {
   try {
-    // Verificar credenciais do arquivo JSON primeiro (prioridade)
-    let credentials: any = null;
-    
+    // Usar diretamente o arquivo de credenciais JSON
     const keyFilePath = path.resolve(__dirname, '../attached_assets/crm-originaldigital-460218-03c085ac30b8.json');
-    if (fs.existsSync(keyFilePath)) {
-      console.log('Lendo credenciais do arquivo JSON...');
-      const keyFileContent = fs.readFileSync(keyFilePath, 'utf8');
-      const keyData = JSON.parse(keyFileContent);
-      
-      credentials = {
-        client_email: keyData.client_email,
-        private_key: keyData.private_key,
-        client_id: keyData.client_id,
-      };
-    } else {
-      // Usar variáveis de ambiente como fallback
-      console.log('Arquivo JSON não encontrado, usando variáveis de ambiente...');
-      credentials = {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        client_id: process.env.GOOGLE_CLIENT_ID,
-      };
-    }
-
-    // Verificar se temos credenciais válidas
-    if (!credentials.client_email || !credentials.private_key) {
-      throw new Error('Credenciais do Google Drive não encontradas. Verifique o arquivo JSON ou as variáveis de ambiente.');
-    }
-
-    console.log(`Autenticando com o Google Drive usando a conta: ${credentials.client_email}`);
     
-    // Criar cliente JWT com as credenciais
+    if (!fs.existsSync(keyFilePath)) {
+      console.error('Arquivo de credenciais Google Drive não encontrado:', keyFilePath);
+      throw new Error('Arquivo de credenciais do Google Drive não encontrado');
+    }
+    
+    console.log('Usando arquivo de credenciais JSON para autenticação Google Drive:', keyFilePath);
+    
+    // Criar cliente JWT com o arquivo de credenciais
     const auth = new JWT({
-      email: credentials.client_email,
-      key: credentials.private_key,
+      keyFile: keyFilePath,
       scopes: ['https://www.googleapis.com/auth/drive'],
     });
-
-    await auth.authorize(); // Garantir que a autenticação funcione
-    console.log('Autenticação com o Google Drive realizada com sucesso');
-    return auth;
+    
+    // Verificar se a autenticação funciona
+    try {
+      await auth.authorize();
+      console.log('Autenticação com o Google Drive realizada com sucesso');
+      return auth;
+    } catch (authError) {
+      console.error('Erro na autenticação JWT:', authError);
+      throw authError;
+    }
   } catch (error) {
     console.error('Erro ao autenticar com o Google Drive:', error);
     throw error;
@@ -134,10 +118,18 @@ export async function createClientFolderStructure(clientName: string): Promise<s
   try {
     console.log(`Iniciando criação da estrutura de pastas para o cliente: ${clientName}`);
     
+    // Obter cliente autenticado
     const auth = await getAuthClient();
     
     // 1. Criar pasta principal do cliente
     const clientFolderId = await createFolder(auth, clientName, CLIENTES_FOLDER_ID || "");
+    
+    if (!clientFolderId) {
+      console.error(`Não foi possível criar a pasta principal para o cliente ${clientName}`);
+      return null;
+    }
+    
+    console.log(`Pasta principal criada para o cliente ${clientName} com ID: ${clientFolderId}`);
     
     // 2. Criar subpastas principais
     for (const folderName of FOLDER_STRUCTURE) {
@@ -145,6 +137,7 @@ export async function createClientFolderStructure(clientName: string): Promise<s
       
       // 3. Criar subpastas dentro da pasta "06 - Criativos"
       if (folderName === '06 - Criativos' && folderId) {
+        console.log(`Criando subpastas dentro da pasta ${folderName}`);
         for (const subfolderName of CREATIVE_SUBFOLDERS) {
           await createFolder(auth, subfolderName, folderId);
         }
