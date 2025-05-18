@@ -131,16 +131,25 @@ export function ClientDialog({
         contractValue: values.contractValue ? parseFloat(values.contractValue) : undefined,
       };
       
+      // Aviso sobre a criação de pastas no Google Drive para clientes novos
+      if (!client) {
+        toast({
+          title: "Criando estrutura de pastas",
+          description: "Estamos criando a estrutura de pastas no Google Drive para este cliente. Isso pode levar alguns segundos.",
+        });
+      }
+      
       onSave(processedValues);
       toast({
-        title: client ? "Client updated" : "Client created",
-        description: client ? "Client has been updated successfully." : "Client has been created successfully.",
+        title: client ? "Cliente atualizado" : "Cliente criado",
+        description: client ? "Cliente foi atualizado com sucesso." : "Cliente foi criado com sucesso e a estrutura de pastas foi iniciada.",
       });
       onOpenChange(false);
     } catch (error) {
+      console.error("Erro ao salvar cliente:", error);
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Erro",
+        description: "Ocorreu um erro. Por favor, tente novamente.",
         variant: "destructive",
       });
     }
@@ -393,7 +402,35 @@ export function ClientDialog({
                       <FormItem>
                         <FormLabel>LinkedIn</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter LinkedIn profile" {...field} value={field.value || ""} />
+                          <Input placeholder="Digite o perfil do LinkedIn" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="youtube"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>YouTube</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Digite o canal do YouTube" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tiktok"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>TikTok</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Digite o perfil do TikTok" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -403,19 +440,37 @@ export function ClientDialog({
               </TabsContent>
 
               <TabsContent value="contract" className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="servicesPlatforms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Serviços Contratados</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Liste os serviços contratados (tráfego pago, social media, etc.)" 
+                          {...field} 
+                          value={field.value || ""} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="paymentDay"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Payment Day</FormLabel>
+                        <FormLabel>Dia do Pagamento</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
                             min="1" 
                             max="31" 
-                            placeholder="Day of month" 
+                            placeholder="Dia do mês" 
                             {...field} 
                             value={field.value || ""} 
                           />
@@ -427,10 +482,41 @@ export function ClientDialog({
 
                   <FormField
                     control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Forma de Pagamento</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value || ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a forma de pagamento" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="pix">Pix</SelectItem>
+                            <SelectItem value="boleto">Boleto</SelectItem>
+                            <SelectItem value="cartao">Cartão de Crédito</SelectItem>
+                            <SelectItem value="transferencia">Transferência</SelectItem>
+                            <SelectItem value="outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
                     name="contractValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contract Value</FormLabel>
+                        <FormLabel>Valor do Contrato</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -452,7 +538,7 @@ export function ClientDialog({
                     name="contractStart"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contract Start Date</FormLabel>
+                        <FormLabel>Início do Contrato</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} value={field.value || ""} />
                         </FormControl>
@@ -466,7 +552,7 @@ export function ClientDialog({
                     name="contractEnd"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contract End Date</FormLabel>
+                        <FormLabel>Vencimento/Renovação</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} value={field.value || ""} />
                         </FormControl>
@@ -478,12 +564,39 @@ export function ClientDialog({
 
                 <FormField
                   control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status do Contrato</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Ativo</SelectItem>
+                          <SelectItem value="paused">Pausado</SelectItem>
+                          <SelectItem value="closed">Encerrado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Descrição</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Enter description" {...field} value={field.value || ""} />
+                        <Textarea placeholder="Digite uma descrição detalhada" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

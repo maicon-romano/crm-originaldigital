@@ -12,6 +12,8 @@ import {
   deleteFirestoreUser,
   FirestoreUser 
 } from './firebase-admin';
+// Importar o serviço do Google Drive
+import { createClientFolderStructure } from './google-drive-service';
 // Importar registradores de rotas
 import { registerEmailRoutes } from './email-routes';
 
@@ -372,14 +374,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clients", async (req, res) => {
     try {
       const validatedData = insertClientSchema.parse(req.body);
+      
+      // Criar o cliente no banco de dados
       const client = await storage.createClient(validatedData);
+      
+      // Criar estrutura de pastas no Google Drive após criar o cliente
+      try {
+        const folderId = await createClientFolderStructure(validatedData.companyName);
+        
+        if (folderId) {
+          // Atualizar o cliente com o ID da pasta do Google Drive
+          await storage.updateClient(client.id, { googleDriveFolderId: folderId });
+          
+          // Atualizar o objeto client para a resposta
+          client.googleDriveFolderId = folderId;
+          
+          console.log(`Estrutura de pastas criada com sucesso para o cliente ${validatedData.companyName}, ID da pasta: ${folderId}`);
+        } else {
+          console.warn(`Não foi possível criar a estrutura de pastas para o cliente ${validatedData.companyName}`);
+        }
+      } catch (driveError) {
+        // Mesmo que haja erro ao criar as pastas, não impedimos a criação do cliente
+        console.error("Erro ao criar estrutura de pastas no Google Drive:", driveError);
+      }
+      
       return res.status(201).json(client);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
       }
-      console.error("Create client error:", error);
-      return res.status(500).json({ message: "Internal server error" });
+      console.error("Erro ao criar cliente:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
