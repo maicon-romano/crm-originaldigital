@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "Já existe um usuário com este e-mail" });
       }
       
-      // Criar o usuário no Firestore com flags de primeiro login e mudança de senha
+      // Criar o usuário no Firestore com flag de redefinição de senha
       const newUser = await createFirestoreUser({
         id,
         email,
@@ -71,8 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role,
         userType,
         active: true,
-        firstLogin: true,           // Definir explicitamente como primeiro login
-        needsPasswordChange: true,  // Definir explicitamente como necessitando troca de senha
+        precisa_redefinir_senha: true,  // Definir explicitamente que o usuário precisa trocar a senha
         ...rest
       });
       
