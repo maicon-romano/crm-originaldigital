@@ -350,7 +350,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client Routes
   app.get("/api/clients", async (req, res) => {
     try {
-      const clients = await storage.getClients();
+      // Buscar clientes do Firestore ao invés do storage relacional
+      const firestoreDb = admin.firestore();
+      const clientsSnapshot = await firestoreDb.collection('clients').get();
+      
+      const clients = clientsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      console.log("Clientes encontrados:", clients.length);
       return res.status(200).json(clients);
     } catch (error) {
       console.error("Get clients error:", error);
