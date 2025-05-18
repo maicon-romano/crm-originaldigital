@@ -19,6 +19,8 @@ export interface FirestoreUser {
   active: boolean;
   createdAt: number;     // Timestamp
   updatedAt: number;     // Timestamp
+  firstLogin?: boolean;  // Indica se é o primeiro login do usuário
+  needsPasswordChange?: boolean; // Indica se o usuário precisa trocar a senha
 }
 
 // Inicializar o admin SDK, verificando se já foi inicializado
@@ -79,6 +81,17 @@ export async function getFirestoreUserById(userId: string) {
     
     if (userDoc.exists) {
       const userData = userDoc.data() || {};
+      // Log para depuração
+      console.log("Dados do usuário obtidos do Firestore:", { userId, userData });
+      
+      // Se as flags não existirem, assumir valores padrão
+      if (userData.firstLogin === undefined) {
+        userData.firstLogin = true;
+      }
+      if (userData.needsPasswordChange === undefined) {
+        userData.needsPasswordChange = true;
+      }
+      
       return { ...userData, id: userId } as FirestoreUser;
     }
     
@@ -97,7 +110,14 @@ export async function getFirestoreUserByEmail(email: string) {
     if (!userQuery.empty) {
       const userDoc = userQuery.docs[0];
       const userData = userDoc.data() || {};
-      return { ...userData, id: userDoc.id } as FirestoreUser;
+      console.log("Dados do usuário obtidos do Firestore por email:", { email, userData });
+      // Garantir que as propriedades firstLogin e needsPasswordChange estejam presentes
+      return { 
+        ...userData, 
+        id: userDoc.id,
+        firstLogin: userData.firstLogin ?? true,  // Se não existir, assume que é primeiro login
+        needsPasswordChange: userData.needsPasswordChange ?? true // Se não existir, assume que precisa trocar a senha
+      } as FirestoreUser;
     }
     
     return null;
