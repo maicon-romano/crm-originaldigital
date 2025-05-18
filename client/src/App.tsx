@@ -62,7 +62,7 @@ export default function App() {
   return (
     <Switch>
       <Route path="/login">
-        {isAuthenticated ? navigate("/") : <Login />}
+        {isAuthenticated ? <Dashboard /> : <Login />}
       </Route>
 
       <Route path="/change-password">
