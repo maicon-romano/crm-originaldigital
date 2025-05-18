@@ -174,7 +174,16 @@ export const getFirestoreUserById = async (userId: string): Promise<FirestoreUse
     const userDoc = await getDoc(doc(usersCollection, userId));
     
     if (userDoc.exists()) {
-      return userDoc.data() as FirestoreUser;
+      // Fazer log detalhado dos dados do usuário para depuração
+      const userData = userDoc.data() as FirestoreUser;
+      console.log("Dados brutos do usuário no Firestore:", userData);
+      
+      // Garantir que as flags de primeiro login estejam presentes
+      return {
+        ...userData,
+        firstLogin: userData.firstLogin === undefined ? false : userData.firstLogin,
+        needsPasswordChange: userData.needsPasswordChange === undefined ? false : userData.needsPasswordChange
+      };
     }
     
     return null;

@@ -35,34 +35,55 @@ interface AuthContextType {
 
 // Converter usuário do Firebase + Firestore para nosso modelo de usuário
 const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> => {
-  // Buscar informações adicionais do usuário no Firestore
-  const firestoreUser = await getFirestoreUserById(firebaseUser.uid);
-  
-  if (firestoreUser) {
-    // Se encontrou o usuário no Firestore, use essas informações
+  try {
+    // Buscar informações adicionais do usuário no Firestore
+    const firestoreUser = await getFirestoreUserById(firebaseUser.uid);
+    
+    if (firestoreUser) {
+      // Se encontrou o usuário no Firestore, use essas informações
+      console.log("Dados completos do usuário no Firestore:", firestoreUser);
+      
+      return {
+        id: firestoreUser.id,
+        name: firestoreUser.name,
+        email: firestoreUser.email,
+        role: firestoreUser.role,
+        userType: firestoreUser.userType,
+        clientId: firestoreUser.clientId,
+        firstLogin: firestoreUser.firstLogin || false,
+        needsPasswordChange: firestoreUser.needsPasswordChange || false
+      };
+    }
+    
+    // Caso não encontre no Firestore (caso de usuário novo), use informações do Firebase
+    // Definindo valores padrão mais seguros
+    const isMainAdmin = firebaseUser.uid === ADMIN_UID;
+    
+    // Usuário não encontrado no Firestore (caso raro)
     return {
-      id: firestoreUser.id,
-      name: firestoreUser.name,
-      email: firestoreUser.email,
-      role: firestoreUser.role,
-      userType: firestoreUser.userType,
-      clientId: firestoreUser.clientId,
-      firstLogin: firestoreUser.firstLogin,
-      needsPasswordChange: firestoreUser.needsPasswordChange
+      id: firebaseUser.uid,
+      name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
+      email: firebaseUser.email,
+      role: isMainAdmin ? 'admin' : 'usuario',
+      userType: isMainAdmin ? 'admin' : 'staff',
+      firstLogin: false,
+      needsPasswordChange: false
+    };
+  } catch (error) {
+    console.error("Erro ao mapear usuário do Firestore:", error);
+    
+    // Em caso de erro, usar dados mínimos do Firebase
+    const adminStatus = firebaseUser.uid === ADMIN_UID;
+    return {
+      id: firebaseUser.uid,
+      name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
+      email: firebaseUser.email,
+      role: adminStatus ? 'admin' : 'usuario',
+      userType: adminStatus ? 'admin' : 'staff',
+      firstLogin: false,
+      needsPasswordChange: false
     };
   }
-  
-  // Caso não encontre no Firestore (caso de usuário novo), use informações do Firebase
-  // Definindo valores padrão mais seguros
-  const isMainAdmin = firebaseUser.uid === ADMIN_UID;
-  
-  return {
-    id: firebaseUser.uid,
-    name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
-    email: firebaseUser.email,
-    role: isMainAdmin ? 'admin' : 'usuario',
-    userType: isMainAdmin ? 'admin' : 'staff',
-  };
 };
 
 const AuthContext = createContext<AuthContextType>({
