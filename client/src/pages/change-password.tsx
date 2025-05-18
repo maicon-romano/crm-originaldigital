@@ -73,6 +73,30 @@ export default function ChangePasswordPage() {
       confirmPassword: '',
     },
   });
+  
+  // Adiciona efeito para monitorar as mudanças nos campos de senha
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'newPassword' || name === 'confirmPassword' || !name) {
+        const newPassword = value.newPassword || '';
+        const confirmPassword = value.confirmPassword || '';
+        
+        setPasswordRequirements({
+          minLength: newPassword.length >= 8,
+          hasUppercase: /[A-Z]/.test(newPassword),
+          hasLowercase: /[a-z]/.test(newPassword),
+          hasNumber: /[0-9]/.test(newPassword),
+          hasSpecialChar: /[^A-Za-z0-9]/.test(newPassword),
+          matches: newPassword === confirmPassword && 
+                  newPassword.length > 0 && 
+                  confirmPassword.length > 0
+        });
+      }
+    });
+    
+    // Limpeza da assinatura quando o componente desmontar
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const onSubmit = async (data: PasswordFormData) => {
     if (!auth.currentUser || !user) {
