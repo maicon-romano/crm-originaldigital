@@ -329,25 +329,53 @@ export default function UsersPage() {
   };
 
   // Enviar convite por email para novo usuário
-  const sendInvitationEmail = (user: FirestoreUser) => {
-    // Implementar integração com Firebase para envio de convite ou redefinição de senha
-    toast({
-      title: 'Convite enviado',
-      description: `Um email de convite foi enviado para ${user.email}`,
-    });
+  const sendInvitationEmail = async (user: FirestoreUser) => {
+    try {
+      // Gerar uma senha temporária para o usuário
+      const tempPassword = "Senha123!"; // Senha temporária padrão
+      
+      // Importar a função de envio de email 
+      const { sendInvitationEmail } = await import('@/lib/emailjs');
+      
+      // Enviar o email de convite com as credenciais
+      const result = await sendInvitationEmail({
+        to_email: user.email,
+        to_name: user.name,
+        password: tempPassword,
+        user_role: user.role === 'admin' ? 'Administrador' : 
+                  user.role === 'usuario' ? 'Usuário' : 'Cliente'
+      });
+      
+      if (result.success) {
+        toast({
+          title: 'Convite enviado',
+          description: `Um email de convite foi enviado para ${user.email}`,
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      console.error('Erro ao enviar convite:', error);
+      toast({
+        title: 'Erro ao enviar convite',
+        description: error.message || 'Ocorreu um erro ao enviar o convite',
+        variant: 'destructive',
+      });
+    }
   };
 
-  // Redefinir senha de um usuário existente
+  // Redefinir senha de um usuário existente usando Firebase Authentication
   const resetPassword = async (user: FirestoreUser) => {
     try {
-      // Implementar integração com Firebase para redefinição de senha
+      // Usar a função do Firebase para enviar email de redefinição de senha
       await sendPasswordResetEmail(user.email);
       
       toast({
-        title: 'Redefinição de senha',
+        title: 'Redefinição de senha enviada',
         description: `Um link para redefinição de senha foi enviado para ${user.email}`,
       });
     } catch (error: any) {
+      console.error('Erro ao redefinir senha:', error);
       toast({
         title: 'Erro',
         description: `Falha ao enviar email de redefinição: ${error.message}`,
