@@ -79,7 +79,7 @@ interface ClientDialogProps {
   onSave: (client: Client) => void;
 }
 
-export default function ClientDialog({
+export function ClientDialog({
   open,
   onOpenChange,
   client,

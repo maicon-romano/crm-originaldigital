@@ -37,7 +37,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
 
 const clientSchema = z.object({
   companyName: z.string().min(1, "Nome da empresa é obrigatório"),
@@ -79,7 +78,7 @@ interface ClientDialogProps {
   onSave: (client: Client) => void;
 }
 
-export default function ClientDialog({
+export function ClientDialog({
   open,
   onOpenChange,
   client,
@@ -140,7 +139,7 @@ export default function ClientDialog({
         });
       }
       
-      onSave(processedValues as Client);
+      onSave(processedValues);
       toast({
         title: client ? "Cliente atualizado" : "Cliente criado",
         description: client ? "Cliente foi atualizado com sucesso." : "Cliente foi criado com sucesso e a estrutura de pastas foi iniciada.",
@@ -225,7 +224,7 @@ export default function ClientDialog({
                   
                   <FormField
                     control={form.control}
-                    name="description"
+                    name="contactPosition"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Cargo</FormLabel>
@@ -357,9 +356,10 @@ export default function ClientDialog({
                     />
                   </div>
                 </div>
+                />
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Redes Sociais</h3>
+                  <h3 className="text-lg font-medium mb-2">Redes Sociais</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -420,20 +420,22 @@ export default function ClientDialog({
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="tiktok"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>TikTok</FormLabel>
-                        <FormControl>
-                          <Input placeholder="tiktok.com/@perfil" {...field} value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                      
+                  <div className="grid grid-cols-1 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="tiktok"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>TikTok</FormLabel>
+                          <FormControl>
+                            <Input placeholder="tiktok.com/@perfil" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="servicesPlatforms"
@@ -460,7 +462,7 @@ export default function ClientDialog({
               <TabsContent value="contract" className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="observations"
+                  name="contractDescription"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Descrição dos Serviços Contratados</FormLabel>
@@ -586,28 +588,125 @@ export default function ClientDialog({
                         </SelectContent>
                       </Select>
                       <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="contractValue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor do Contrato</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="0.00" 
+                            {...field} 
+                            value={field.value || ""} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="contractStart"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Início do Contrato</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="contractEnd"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vencimento/Renovação</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status do Contrato</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Ativo</SelectItem>
+                          <SelectItem value="paused">Pausado</SelectItem>
+                          <SelectItem value="closed">Encerrado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descrição</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Digite uma descrição detalhada" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="observations"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observations</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Enter observations" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </TabsContent>
             </Tabs>
 
-            <DialogFooter className="mt-6">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                Cancel
               </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : client ? (
-                  "Atualizar Cliente"
-                ) : (
-                  "Adicionar Cliente"
-                )}
-              </Button>
+              <Button type="submit">{client ? "Save Changes" : "Create Client"}</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -615,3 +714,5 @@ export default function ClientDialog({
     </Dialog>
   );
 }
+
+export default ClientDialog;
