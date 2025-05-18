@@ -348,7 +348,16 @@ export default function UsersPage() {
     if (selectedUser) {
       try {
         setIsDeleting(true);
-        await deleteFirestoreUser(selectedUser.id);
+        
+        // Usar a API do servidor para excluir usuário
+        const response = await fetch(`/api/firestore/users/${selectedUser.id}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`Erro ao excluir usuário: ${errorData.message || response.statusText}`);
+        }
         
         toast({
           title: 'Usuário excluído',
