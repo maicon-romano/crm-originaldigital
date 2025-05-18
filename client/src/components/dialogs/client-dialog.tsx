@@ -246,7 +246,7 @@ export function ClientDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           <SelectItem value="technology">Technology</SelectItem>
                           <SelectItem value="healthcare">Healthcare</SelectItem>
                           <SelectItem value="education">Education</SelectItem>
