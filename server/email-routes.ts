@@ -1,53 +1,55 @@
-import { Express, Request, Response } from 'express';
-import { sendInvitation, testEmailConnection } from './nodemailer-service';
+import { Request, Response, Express } from 'express';
+import { sendInvitationEmail, verifyEmailConnection } from './email-resend';
 
 /**
  * Registra as rotas relacionadas a email no aplicativo Express
  */
 export function registerEmailRoutes(app: Express): void {
-  // Endpoint para envio de convites por email
+  /**
+   * Rota para enviar convite por email
+   */
   app.post('/api/email/send-invitation', async (req: Request, res: Response) => {
     try {
       const { email, name, password, role } = req.body;
-      
-      // Validar parâmetros necessários
-      if (!email || !name) {
-        return res.json({
+
+      // Validar dados obrigatórios
+      if (!email || !name || !password || !role) {
+        return res.status(400).json({
           success: false,
-          message: 'Dados insuficientes. Email e nome são obrigatórios.'
+          message: 'Dados incompletos. É necessário fornecer email, nome, senha e função.'
         });
       }
-      
-      console.log(`Enviando convite para ${email} (${name}) com papel ${role || 'Usuário'}`);
-      
-      // Enviar o email usando o Nodemailer com as credenciais da Hostgator
-      const result = await sendInvitation({
+
+      // Enviar o email de convite
+      const result = await sendInvitationEmail({
         to: email,
         name,
-        password: password || 'Senha123!',
-        role: role || 'Usuário'
+        password,
+        role
       });
-      
-      return res.json(result);
-    } catch (error: any) {
-      console.error('Erro ao processar solicitação de envio de convite:', error);
-      return res.json({
+
+      // Retornar resultado
+      return res.status(result.success ? 200 : 500).json(result);
+    } catch (error) {
+      console.error('Erro ao processar requisição de envio de convite:', error);
+      return res.status(500).json({
         success: false,
-        message: `Erro ao enviar convite: ${error.message}`
+        message: `Erro ao processar requisição: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
       });
     }
   });
-  
-  // Rota para testar a conexão com o servidor de email
+
+  /**
+   * Rota para testar a conexão com o serviço de email
+   */
   app.get('/api/email/test', async (req: Request, res: Response) => {
     try {
-      const result = await testEmailConnection();
-      return res.json(result);
-    } catch (error: any) {
-      console.error('Erro ao testar conexão de email:', error);
-      return res.json({
+      const result = await verifyEmailConnection();
+      return res.status(result.success ? 200 : 500).json(result);
+    } catch (error) {
+      return res.status(500).json({
         success: false,
-        message: `Erro ao testar conexão de email: ${error.message}`
+        message: `Erro ao testar conexão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
       });
     }
   });

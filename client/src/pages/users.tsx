@@ -354,7 +354,7 @@ export default function UsersPage() {
       const userRole = user.role === 'admin' ? 'Administrador' : 
                      user.role === 'usuario' ? 'Usuário' : 'Cliente';
       
-      console.log(`Enviando convite para ${user.email} com papel ${userRole}`);
+      console.log(`Enviando convite para ${user.email} com papel ${userRole} usando Resend`);
       
       // Chamar a API do backend para enviar o email com timeout de 15 segundos
       const controller = new AbortController();
