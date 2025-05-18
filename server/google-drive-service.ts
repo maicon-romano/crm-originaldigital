@@ -110,12 +110,10 @@ async function createFolder(auth: JWT, folderName: string, parentFolderId: strin
     const fileMetadata: any = {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
+      parents: [parentFolderId || CLIENTES_FOLDER_ID] // Sempre usar CLIENTES_FOLDER_ID como fallback
     };
     
-    // Adicionar parentFolderId apenas se estiver definido
-    if (parentFolderId) {
-      fileMetadata.parents = [parentFolderId];
-    }
+    console.log(`Criando pasta "${folderName}" com parent ID: ${parentFolderId || CLIENTES_FOLDER_ID}`);
 
     const file = await drive.files.create({
       requestBody: fileMetadata,

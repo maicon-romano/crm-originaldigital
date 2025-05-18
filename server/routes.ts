@@ -466,13 +466,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Enviar email de convite com senha temporária
           try {
             console.log(`Enviando email de convite para: ${validatedData.email}`);
-            await sendInvitationEmail({
+            const emailResult = await sendInvitationEmail({
               to: validatedData.email,
               name: validatedData.contactName,
               password: tempPassword,
               role: 'Cliente'
             });
-            console.log(`Email de convite enviado para ${validatedData.email}`);
+            
+            if (emailResult.success) {
+              console.log(`Email de convite enviado com sucesso para ${validatedData.email}`);
+            } else {
+              console.error(`Falha ao enviar email: ${emailResult.message}`);
+              // Tentar envio alternativo usando email-resend
+              const resendResult = await require('./email-resend').sendInvitationEmail({
+                to: validatedData.email,
+                name: validatedData.contactName,
+                password: tempPassword,
+                role: 'Cliente'
+              });
+              console.log('Resultado do envio alternativo:', resendResult);
+            }
           } catch (emailError) {
             console.error('Erro ao enviar email de convite:', emailError);
           }
