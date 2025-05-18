@@ -328,9 +328,18 @@ export default function UsersPage() {
     setDeleteDialogOpen(true);
   };
 
+  // Estado para controlar o envio de convites
+  const [sendingInvite, setSendingInvite] = useState<string | null>(null);
+
   // Enviar convite por email para novo usuário
   const sendInvitation = async (user: FirestoreUser) => {
+    // Não fazer nada se já estiver enviando para este usuário
+    if (sendingInvite === user.id) return;
+    
     try {
+      // Atualizar estado para indicar que está enviando
+      setSendingInvite(user.id);
+      
       // Mostrar toast de carregamento
       toast({
         title: 'Enviando convite...',
@@ -340,16 +349,16 @@ export default function UsersPage() {
       // Gerar uma senha temporária para o usuário
       const tempPassword = "Senha123!"; // Senha temporária padrão
       
-      // Importar diretamente do módulo atualizado
+      // Importar diretamente do módulo atualizado com emailjs
       const emailModule = await import('@/lib/emailjs');
       
       // Preparar dados para o convite
       const userRole = user.role === 'admin' ? 'Administrador' : 
-                       user.role === 'usuario' ? 'Usuário' : 'Cliente';
+                      user.role === 'usuario' ? 'Usuário' : 'Cliente';
       
       console.log(`Enviando convite para ${user.email} com papel ${userRole}`);
       
-      // Enviar o email de convite com as credenciais
+      // Enviar o email de convite com as credenciais usando emailjs
       const result = await emailModule.sendInvitationEmail({
         to_email: user.email,
         to_name: user.name,
@@ -358,9 +367,10 @@ export default function UsersPage() {
       });
       
       if (result.success) {
+        // Mostrar toast de sucesso
         toast({
-          title: 'Convite enviado',
-          description: `Um email de convite foi enviado para ${user.email}`,
+          title: 'Convite enviado com sucesso!',
+          description: `Email enviado para ${user.email} com as credenciais de acesso`,
         });
       } else {
         throw new Error(result.message);
@@ -372,6 +382,9 @@ export default function UsersPage() {
         description: error.message || 'Ocorreu um erro ao enviar o convite',
         variant: 'destructive',
       });
+    } finally {
+      // Sempre limpar o estado de envio no final
+      setSendingInvite(null);
     }
   };
 
@@ -532,8 +545,13 @@ export default function UsersPage() {
             size="icon"
             onClick={() => sendInvitation(row.original)}
             title="Enviar Convite"
+            disabled={sendingInvite === row.original.id}
           >
-            <Mail className="h-4 w-4" />
+            {sendingInvite === row.original.id ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            ) : (
+              <Mail className="h-4 w-4" />
+            )}
           </Button>
           
           <Button
