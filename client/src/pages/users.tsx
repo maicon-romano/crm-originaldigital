@@ -16,6 +16,9 @@ import {
   deleteFirestoreUser,
   usersCollection
 } from '@/lib/firebase';
+
+// Senha temporária padrão para novos usuários
+const DEFAULT_TEMP_PASSWORD = "Mudar@123";
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -829,38 +832,21 @@ export default function UsersPage() {
                 />
                 
                 {!selectedUser && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Senha</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="********" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Deixe em branco para gerar uma senha aleatória
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirmar Senha</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="********" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-md mb-4">
+                    <p className="flex items-center gap-2 text-sm text-blue-700 font-medium mb-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                      </svg>
+                      Senha Temporária e Convite por Email
+                    </p>
+                    <p className="text-sm text-blue-600 pl-6">
+                      A senha temporária <strong>"{DEFAULT_TEMP_PASSWORD}"</strong> será atribuída e um 
+                      convite será automaticamente enviado para o email do usuário. Na primeira vez que 
+                      acessar o sistema, será solicitado que crie uma nova senha.
+                    </p>
+                  </div>
                 )}
               </div>
               
