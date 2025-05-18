@@ -137,8 +137,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "Já existe um usuário com este e-mail" });
       }
       
-      // Log dos dados recebidos para depuração
-      console.log("Dados recebidos para criação de usuário:", userData);
+      // Log mais detalhado dos dados recebidos para depuração
+      console.log("Dados completos recebidos para criação de usuário:", JSON.stringify(userData, null, 2));
       
       // Criar o usuário no Firestore
       const newUser = await createFirestoreUser({
@@ -150,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userType: userData.userType || 'staff',
         active: true,
         phone: userData.phone,
-        position: userData.cargo, // Mapeamento de cargo para position
+        position: userData.cargo || userData.position, // Aceitar tanto cargo quanto position
         clientId: userData.clientId,
         department: userData.department
       });

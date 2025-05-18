@@ -184,6 +184,13 @@ export default function UsersPage() {
       if (!selectedUser) {
         try {
           // Criar usuário no Firebase Auth e Firestore
+          // Adicionar console.log para depuração
+          console.log("Enviando dados de usuário:", { 
+            ...values,
+            userType,
+            cargo: values.cargo  // Verificar se o campo está sendo preenchido
+          });
+          
           const firebaseUser = await createUser(
             values.email, 
             values.password || "Senha123!", // Senha padrão temporária se não fornecida

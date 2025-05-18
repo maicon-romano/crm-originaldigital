@@ -5,7 +5,7 @@ export type UserType = 'admin' | 'staff' | 'client';
 
 // Interface para usuário do Firestore
 export interface FirestoreUser {
-  id: string;
+  id: string;            // UID do Firebase Authentication
   username: string;
   name: string;
   email: string;
@@ -13,7 +13,7 @@ export interface FirestoreUser {
   userType: UserType;
   role: string;         // Permissão: 'admin' ou 'usuario' ou 'cliente' 
   department?: string;
-  position?: string;
+  position?: string;     // Cargo do usuário
   avatar?: string;
   clientId?: number;
   active: boolean;
@@ -140,10 +140,16 @@ export async function updateFirestoreUser(userId: string, userData: Partial<Fire
   }
 }
 
-// Função para excluir um usuário
+// Função para excluir um usuário (tanto do Firestore quanto do Authentication)
 export async function deleteFirestoreUser(userId: string) {
   try {
+    // 1. Excluir dados do usuário no Firestore
     await usersCollection.doc(userId).delete();
+    
+    // 2. Excluir o usuário do Firebase Authentication
+    await admin.auth().deleteUser(userId);
+    
+    console.log(`Usuário ${userId} excluído com sucesso do Firestore e Authentication`);
     return true;
   } catch (error) {
     console.error('[Admin API] Erro ao excluir usuário:', error);
