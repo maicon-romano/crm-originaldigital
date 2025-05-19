@@ -141,6 +141,37 @@ export default function ClientDialog({
       }
       
       onSave(processedValues as Client);
+      
+      // Limpar o formulário após criar um novo cliente
+      if (!client) {
+        form.reset({
+          companyName: "",
+          contactName: "",
+          email: "",
+          phone: "",
+          cnpjCpf: "",
+          address: "",
+          city: "",
+          state: "",
+          website: "",
+          instagram: "",
+          facebook: "",
+          linkedin: "",
+          youtube: "",
+          tiktok: "",
+          paymentDay: "",
+          contractValue: "",
+          contractStart: "",
+          contractEnd: "",
+          category: "",
+          description: "",
+          observations: "",
+          status: "active",
+          paymentMethod: "",
+          servicesPlatforms: ""
+        });
+      }
+      
       toast({
         title: client ? "Cliente atualizado" : "Cliente criado",
         description: client ? "Cliente foi atualizado com sucesso." : "Cliente foi criado com sucesso e a estrutura de pastas foi iniciada.",

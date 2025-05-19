@@ -88,13 +88,13 @@ export default function App() {
   useEffect(() => {
     // Se o usuário estiver logado e não estiver na página de troca de senha
     if (!isLoading && user && location !== '/change-password') {
-      // Verificar se precisa redefinir senha (qualquer tipo de usuário - cliente, staff ou admin)
+      // Verificação rigorosa: qualquer usuário que precisa redefinir senha é redirecionado
+      // isto vale para todos os tipos de usuário (cliente, staff, admin)
       if (precisa_redefinir_senha === true) {
-        console.log(`Usuário ${user.email} (${user.userType || user.role}) precisa redefinir senha no primeiro login. Redirecionando para /change-password`);
-        // Usar timeout para garantir que o redirecionamento aconteça
-        setTimeout(() => {
-          navigate("/change-password");
-        }, 100);
+        console.log(`REDIRECIONAMENTO: Usuário ${user.email} (${user.userType || user.role}) precisa redefinir senha no primeiro login.`);
+        // Forçar redirecionamento com máxima prioridade
+        navigate("/change-password");
+        return; // Interromper a execução para garantir o redirecionamento
       }
     }
   }, [isLoading, user, precisa_redefinir_senha, navigate, location]);
