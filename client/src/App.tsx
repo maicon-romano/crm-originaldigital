@@ -55,11 +55,11 @@ function NoClientAccess({ children }: { children: ReactNode }) {
     if (!isLoading && isAuthenticated && 
         (isClient || user?.userType === 'client' || user?.role === 'cliente')) {
       console.log("BLOQUEIO TOTAL: Usuário tipo cliente tentando acessar área restrita. Bloqueando acesso.");
-      // Redirecionamento imediato para dashboard
-      navigate("/dashboard");
+      // Redirecionamento imediato para projects (página segura para clientes)
+      navigate("/projects");
       // Segunda camada de segurança com timeout
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/projects");
       }, 50);
       return;
     }
@@ -73,7 +73,7 @@ function NoClientAccess({ children }: { children: ReactNode }) {
   if (isClient || user?.userType === 'client' || user?.role === 'cliente') {
     console.log("BLOQUEIO SECUNDÁRIO: Tentativa de acesso bloqueada para usuário cliente.");
     // Forçar redirecionamento como última camada de segurança
-    navigate("/dashboard");
+    navigate("/projects");
     return null; // Garantir que nada seja renderizado
   }
 
