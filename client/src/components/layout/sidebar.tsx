@@ -258,8 +258,13 @@ export function Sidebar() {
 
         <nav className="flex-1 overflow-y-auto pt-5 px-2">
           <div className="space-y-1">
-            {mainLinks.map((link) => (
-              !isClient || link.href !== '/clients'? (
+            {mainLinks.map((link) => {
+              // Se o usuário for cliente e a página for 'clients', não mostrar o item
+              if (isClient && link.href === '/clients') {
+                return null;
+              }
+              
+              return (
                 <SidebarLink
                   key={link.href}
                   href={link.href}
@@ -269,8 +274,8 @@ export function Sidebar() {
                   collapsed={collapsed}
                   adminOnly={link.adminOnly}
                 />
-              ): null
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-8 pt-4 border-t border-gray-700">
