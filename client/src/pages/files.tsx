@@ -1,160 +1,214 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FilesIcon, ExternalLink, FolderOpen, Shield, Lock } from "lucide-react";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import axios from "axios";
-import MainLayout from "@/components/layout/main-layout";
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, FolderOpen, FileIcon, ExternalLink } from 'lucide-react';
+
+// Tipo para clientes com pastas do Google Drive
+interface ClientWithDrive {
+  id: number;
+  companyName: string;
+  googleDriveFolderId?: string;
+  googleDriveFolderUrl?: string;
+}
 
 export default function FilesPage() {
-  const { user, isLoading } = useAuth();
-  const [folderUrl, setFolderUrl] = useState<string | null>(null);
-  const [isLoadingFolder, setIsLoadingFolder] = useState(false);
+  const { user, isStaff, isAdmin, isClient } = useAuth();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (user && user.clientId) {
-      loadFolderInfo();
-    }
-  }, [user]);
+  // Estado para armazenar o URL da pasta quando o botão é clicado
+  const [selectedFolderUrl, setSelectedFolderUrl] = useState<string | null>(null);
 
-  const loadFolderInfo = async () => {
-    if (!user || !user.clientId) return;
+  // Buscar clientes que têm pasta no Google Drive
+  const { data: clients, isLoading: isLoadingClients } = useQuery<ClientWithDrive[]>({
+    queryKey: ['/api/clients'],
+    enabled: !isClient, // Apenas carregar se não for um cliente
+  });
 
-    setIsLoadingFolder(true);
+  // Para usuários do tipo cliente, buscar apenas sua própria pasta
+  const { data: clientData, isLoading: isLoadingClientData } = useQuery<{success: boolean, folderUrl: string}>({
+    queryKey: ['/api/clients', user?.clientId, 'drive-folder'],
+    queryFn: async () => {
+      const response = await fetch(`/api/clients/${user?.clientId}/drive-folder`);
+      if (!response.ok) {
+        throw new Error('Falha ao buscar pasta do cliente');
+      }
+      return response.json();
+    },
+    enabled: !!isClient && !!user?.clientId, // Só carregar se for cliente e tiver clientId
+  });
+
+  // Função para abrir a pasta do cliente
+  const openFolder = async (clientId: number) => {
     try {
-      const response = await axios.get(`/api/clients/${user.clientId}/drive-folder`);
-      if (response.data.success) {
-        setFolderUrl(response.data.folderUrl);
+      setIsLoading(true);
+      const response = await fetch(`/api/clients/${clientId}/drive-folder`);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Falha ao acessar a pasta');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.folderUrl) {
+        // Abrir em uma nova aba
+        window.open(data.folderUrl, '_blank');
       } else {
         toast({
-          title: "Erro ao carregar pasta",
-          description: response.data.message || "Não foi possível carregar as informações da pasta",
-          variant: "destructive",
+          title: "Erro",
+          description: "Não foi possível obter o link da pasta",
+          variant: "destructive"
         });
       }
-    } catch (error) {
-      console.error("Erro ao buscar pasta:", error);
+    } catch (error: any) {
       toast({
-        title: "Erro ao carregar pasta",
-        description: "Ocorreu um erro ao buscar informações da sua pasta de arquivos",
-        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Erro ao acessar a pasta do Google Drive",
+        variant: "destructive"
       });
     } finally {
-      setIsLoadingFolder(false);
+      setIsLoading(false);
     }
   };
 
-  // Se o usuário não for cliente, mostrar mensagem diferente
-  if (user && user.userType !== "client") {
+  // Se for um cliente, mostrar apenas sua pasta
+  if (isClient) {
     return (
-      <MainLayout>
-        <div className="container mx-auto py-6 space-y-6">
-          <h1 className="text-3xl font-bold">Arquivos</h1>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Acessar Arquivos dos Clientes</CardTitle>
-              <CardDescription>
-                Como você não é um cliente, deve acessar os arquivos através do Google Drive ou solicitar acesso direto.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                Para acessar os arquivos de um cliente específico, vá para a página de detalhes do cliente e clique no botão "Acessar Arquivos".
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  // Se o usuário estiver carregando, mostrar loader
-  if (isLoading || isLoadingFolder) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto py-6 flex flex-col items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Carregando seus arquivos...</p>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  return (
-    <MainLayout>
-      <div className="container mx-auto py-6 space-y-6">
-        <h1 className="text-3xl font-bold">Seus Arquivos</h1>
+      <div className="container mx-auto py-10">
+        <h1 className="text-3xl font-bold mb-8">Seus Arquivos</h1>
         
-        {folderUrl ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FolderOpen className="h-6 w-6 text-primary" />
-                Pasta Compartilhada no Google Drive
-              </CardTitle>
-              <CardDescription>
-                Aqui você pode acessar e gerenciar todos os seus arquivos compartilhados conosco
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border p-4 bg-muted/50">
-                <div className="flex items-start gap-4">
-                  <Shield className="h-10 w-10 text-primary flex-shrink-0 mt-1" />
+        <Card>
+          <CardHeader>
+            <CardTitle>Acesso aos Arquivos</CardTitle>
+            <CardDescription>
+              Acesse os arquivos compartilhados com você no Google Drive
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            {isLoadingClientData ? (
+              <div className="flex justify-center p-6">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : clientData?.success ? (
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-md flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FolderOpen className="h-8 w-8 text-primary" />
                   <div>
-                    <h3 className="text-lg font-medium mb-1">Acesso Seguro</h3>
-                    <p className="text-muted-foreground mb-3">
-                      Seus arquivos estão armazenados com segurança no Google Drive e somente você e nossa equipe temos acesso a eles.
+                    <h3 className="font-medium">Sua Pasta de Arquivos</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Clique no botão ao lado para acessar seus arquivos
                     </p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Lock className="h-4 w-4" /> 
-                      Compartilhado exclusivamente com {user?.email}
-                    </div>
                   </div>
                 </div>
+                
+                <Button 
+                  onClick={() => window.open(clientData.folderUrl, '_blank')}
+                  className="gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Abrir Pasta
+                </Button>
               </div>
-            </CardContent>
-            <CardFooter className="flex justify-center border-t pt-4">
-              <Button 
-                size="lg"
-                onClick={() => window.open(folderUrl, '_blank')}
-                className="w-full sm:w-auto"
-              >
-                <FilesIcon className="mr-2 h-5 w-5" /> 
-                Acessar Meus Arquivos
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Pasta não encontrada</CardTitle>
-              <CardDescription>
-                Não localizamos uma pasta compartilhada para sua conta
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                Não foi possível encontrar uma pasta do Google Drive associada à sua conta. 
-                Entre em contato com nosso suporte para que possamos resolver este problema.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                variant="outline" 
-                onClick={loadFolderInfo}
-                className="w-full sm:w-auto"
-              >
-                Tentar novamente
-              </Button>
-            </CardFooter>
-          </Card>
-        )}
+            ) : (
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-md">
+                <p className="text-amber-700 dark:text-amber-400">
+                  Não há pasta de arquivos configurada para sua conta.
+                  Entre em contato com o suporte para mais informações.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </MainLayout>
+    );
+  }
+
+  // Para administradores e staff, mostrar todas as pastas de clientes
+  return (
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-8">Gerenciamento de Arquivos</h1>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Pastas de Clientes</CardTitle>
+          <CardDescription>
+            Acesse as pastas do Google Drive de cada cliente
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          {isLoadingClients ? (
+            <div className="flex justify-center p-6">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : clients && clients.length > 0 ? (
+            <Table>
+              <TableCaption>Lista de pastas de clientes disponíveis</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell className="font-medium">{client.companyName}</TableCell>
+                    <TableCell className="text-right">
+                      {client.googleDriveFolderId ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => openFolder(client.id)}
+                          disabled={isLoading}
+                          className="gap-2"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <FolderOpen className="h-4 w-4" />
+                          )}
+                          Abrir Pasta
+                        </Button>
+                      ) : (
+                        <Button variant="outline" disabled className="opacity-50">
+                          Sem Pasta
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+              <p className="text-gray-600 dark:text-gray-400">
+                Não há clientes com pastas configuradas.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

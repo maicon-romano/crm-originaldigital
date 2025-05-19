@@ -22,10 +22,14 @@ import { createClientFolderStructure } from './google-drive-service';
 import { sendInvitationEmail } from './email-service';
 // Importar registradores de rotas
 import { registerEmailRoutes } from './email-routes';
+import { registerDriveRoutes } from './drive-routes';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Registrar as rotas de email
   registerEmailRoutes(app);
+  
+  // Registrar as rotas do Google Drive
+  registerDriveRoutes(app);
   
   // Rotas de gerenciamento de usuários no Firestore
   app.get("/api/firestore/users", async (req, res) => {
