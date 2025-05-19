@@ -17,6 +17,7 @@ interface User {
   userType: 'admin' | 'staff' | 'client';
   clientId?: number;
   precisa_redefinir_senha: boolean;
+  lastTempPassword?: string | null; // Campo para armazenar a última senha temporária
 }
 
 interface AuthContextType {
@@ -49,7 +50,8 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
         role: firestoreUser.role,
         userType: firestoreUser.userType,
         clientId: firestoreUser.clientId,
-        precisa_redefinir_senha: firestoreUser.precisa_redefinir_senha || false
+        precisa_redefinir_senha: firestoreUser.precisa_redefinir_senha || false,
+        lastTempPassword: firestoreUser.lastTempPassword || null
       };
     }
     
@@ -64,7 +66,8 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
       email: firebaseUser.email,
       role: isMainAdmin ? 'admin' : 'usuario',
       userType: isMainAdmin ? 'admin' : 'staff',
-      precisa_redefinir_senha: false
+      precisa_redefinir_senha: false,
+      lastTempPassword: null
     };
   } catch (error) {
     console.error("Erro ao mapear usuário do Firestore:", error);
@@ -77,7 +80,8 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
       email: firebaseUser.email,
       role: adminStatus ? 'admin' : 'usuario',
       userType: adminStatus ? 'admin' : 'staff',
-      precisa_redefinir_senha: false
+      precisa_redefinir_senha: false,
+      lastTempPassword: null
     };
   }
 };
@@ -194,22 +198,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUserAfterPasswordChange = async (): Promise<void> => {
     if (user?.id) {
       try {
-        // Atualizar o usuário no Firestore para remover a flag de troca de senha
+        console.log('Atualizando status do usuário após troca de senha');
+        
+        // Atualizar o usuário no Firestore para remover todas as flags de troca de senha
         await fetch(`/api/firestore/users/${user.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            precisa_redefinir_senha: false
+            precisa_redefinir_senha: false,
+            lastTempPassword: null  // Remove a senha temporária armazenada
           })
         });
+        
+        console.log('✅ Status de senha atualizado com sucesso');
         
         // Recarregar os dados do usuário
         if (auth.currentUser) {
           const updatedUser = await mapFirebaseUserToUser(auth.currentUser);
           setUser(updatedUser);
+          console.log('✅ Dados do usuário atualizados após troca de senha');
         }
       } catch (error) {
-        console.error('Erro ao atualizar status de senha do usuário:', error);
+        console.error('❌ Erro ao atualizar status de senha do usuário:', error);
       }
     }
   };
