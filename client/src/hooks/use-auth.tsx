@@ -163,18 +163,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isFirstLogin = auth.currentUser && 
     auth.currentUser.metadata.creationTime === auth.currentUser.metadata.lastSignInTime;
   
-  // Verificação rigorosa para garantir que qualquer tipo de usuário (inclusive clientes)
+  // VERIFICAÇÃO REFORÇADA para garantir que qualquer tipo de usuário (ESPECIALMENTE CLIENTES)
   // seja redirecionado para trocar a senha no primeiro login
   const precisa_redefinir_senha = Boolean(
-    // Verificar flag explícita no objeto do usuário
-    user?.precisa_redefinir_senha || 
-    // Verificar se é primeiro login para qualquer tipo de usuário
+    // 1. Verificar flags explícitas no objeto do usuário
+    user?.precisa_redefinir_senha === true || 
+    // 2. Verificar flag lastTempPassword no cliente
+    (user?.lastTempPassword && user?.lastTempPassword.length > 0) ||
+    // 3. Verificar se é primeiro login para qualquer tipo de usuário
     (isFirstLogin && 
-      // Garantindo que todos os tipos de usuários sejam verificados
+      // Garantir que TODOS os tipos de usuários sejam verificados 
       (user?.userType === 'client' || user?.role === 'cliente' || 
        user?.userType === 'staff' || user?.role === 'usuario' ||
        user?.userType === 'admin' || user?.role === 'admin'))
   );
+  
+  // Adicionar log para depuração de redirecionamento
+  if (user) {
+    console.log(`Verificação de troca de senha para ${user.email}:`, {
+      flag_explícita: user.precisa_redefinir_senha === true,
+      lastTempPassword: Boolean(user.lastTempPassword),
+      isFirstLogin: isFirstLogin,
+      userType: user.userType,
+      role: user.role,
+      resultado: precisa_redefinir_senha
+    })
+  }
   
   // Função para atualizar o usuário após mudar a senha
   const updateUserAfterPasswordChange = async (): Promise<void> => {
