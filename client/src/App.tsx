@@ -90,8 +90,11 @@ export default function App() {
     if (!isLoading && user && location !== '/change-password') {
       // Verificar se precisa redefinir senha (qualquer tipo de usuário - cliente, staff ou admin)
       if (precisa_redefinir_senha === true) {
-        console.log("Usuário precisa redefinir senha. Redirecionando para /change-password");
-        navigate("/change-password");
+        console.log(`Usuário ${user.email} (${user.userType || user.role}) precisa redefinir senha no primeiro login. Redirecionando para /change-password`);
+        // Usar timeout para garantir que o redirecionamento aconteça
+        setTimeout(() => {
+          navigate("/change-password");
+        }, 100);
       }
     }
   }, [isLoading, user, precisa_redefinir_senha, navigate, location]);

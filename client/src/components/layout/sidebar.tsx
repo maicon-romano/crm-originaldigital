@@ -138,7 +138,7 @@ export function Sidebar() {
       icon: <Users className="h-5 w-5" />,
       text: 'Clientes',
       adminOnly: false,
-      staffOnly: true
+      staffOnly: true  // Essa propriedade garante que o link não aparece para clientes
     },
     {
       href: '/projects',

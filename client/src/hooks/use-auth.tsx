@@ -157,15 +157,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user;
   
   // Check if it's first login or if password needs to be changed
-  // Esta verificação funciona para qualquer tipo de usuário (cliente, staff ou admin)
+  // Esta verificação funciona para todos os tipos de usuário (cliente, staff ou admin)
   // 1. Verificamos a flag 'precisa_redefinir_senha' que é definida no servidor
   // 2. Verificamos se é o primeiro login comparando as datas de criação e login
   const isFirstLogin = auth.currentUser && 
     auth.currentUser.metadata.creationTime === auth.currentUser.metadata.lastSignInTime;
-    
+  
+  // Verificação rigorosa para garantir que qualquer tipo de usuário (inclusive clientes)
+  // seja redirecionado para trocar a senha no primeiro login
   const precisa_redefinir_senha = Boolean(
+    // Verificar flag explícita no objeto do usuário
     user?.precisa_redefinir_senha || 
-    (isFirstLogin && (user?.userType === 'client' || user?.userType === 'staff' || user?.userType === 'admin'))
+    // Verificar se é primeiro login para qualquer tipo de usuário
+    (isFirstLogin && 
+      // Garantindo que todos os tipos de usuários sejam verificados
+      (user?.userType === 'client' || user?.role === 'cliente' || 
+       user?.userType === 'staff' || user?.role === 'usuario' ||
+       user?.userType === 'admin' || user?.role === 'admin'))
   );
   
   // Função para atualizar o usuário após mudar a senha
@@ -196,7 +204,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Considera admin tanto o usuário específico (ADMIN_UID) quanto qualquer usuário com userType 'admin' ou role 'admin'
   const isAdmin = user?.id === ADMIN_UID || user?.userType === 'admin' || user?.role === 'admin';
   const isStaff = user?.userType === 'staff' || user?.role === 'usuario'; // 'usuario' é o equivalente a 'staff' nas regras
-  const isClient = user?.userType === 'client' || user?.role === 'cliente'; // 'cliente' é o equivalente a 'client' nas regras
+  // Verificação rigorosa para clientes - se userType for client OU role for cliente
+  const isClient = user?.userType === 'client' || user?.role === 'cliente';
   
   return (
     <AuthContext.Provider value={{ 
