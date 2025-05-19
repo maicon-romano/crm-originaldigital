@@ -1,0 +1,34 @@
+App - Verificando redirecionamento: Object
+firebase.ts:75 Auth state changed: User is signed out
+App.tsx:89 App - Verificando redirecionamento: Objectlocation: "/"precisa_redefinir_senha: falseuser: undefineduserType: undefined[[Prototype]]: Object
+App.tsx:89 App - Verificando redirecionamento: Objectlocation: "/login"precisa_redefinir_senha: falseuser: undefineduserType: undefined[[Prototype]]: Object
+login.tsx:82 Tentando login com: shardersfx@gmail.com
+firebase.ts:275 Tentando login com email: shardersfx@gmail.com
+firebase.ts:73 Auth state changed: User is signed in VEDeG3UHOSWlcVbRVsPZ74gFfD13
+firebase.ts:310 Login realizado com sucesso: VEDeG3UHOSWlcVbRVsPZ74gFfD13
+use-auth.tsx:115 Usuário autenticado: Objectemail: "shardersfx@gmail.com"id: "VEDeG3UHOSWlcVbRVsPZ74gFfD13"lastTempPassword: nullname: "Maicon Romano"precisa_redefinir_senha: falserole: "usuario"userType: "staff"[[Prototype]]: Object
+firebase.ts:316 Usuário não encontrado no Firestore, criando registro...
+use-auth.tsx:187 Verificação de troca de senha para shardersfx@gmail.com: Objectflag_explícita: falseisFirstLogin: falselastTempPassword: falseresultado: falserole: "usuario"userType: "staff"[[Prototype]]: Object
+App.tsx:89 App - Verificando redirecionamento: Objectlocation: "/login"precisa_redefinir_senha: falseuser: "shardersfx@gmail.com"userType: "staff"[[Prototype]]: Object
+firebase.ts:179 Dados brutos do usuário no Firestore: Objectactive: truecreatedAt: 1747696526055email: "shardersfx@gmail.com"id: "VEDeG3UHOSWlcVbRVsPZ74gFfD13"name: "Maicon Romano"role: "usuario"updatedAt: 1747696526055userType: "staff"username: "shardersfx"[[Prototype]]: Object
+firebase.ts:190 Dados completos do usuário no Firestore: Objectactive: truecreatedAt: 1747696526055email: "shardersfx@gmail.com"id: "VEDeG3UHOSWlcVbRVsPZ74gFfD13"name: "Maicon Romano"precisa_redefinir_senha: undefinedrole: "usuario"updatedAt: 1747696526055userType: "staff"username: "shardersfx"[[Prototype]]: Object
+App.tsx:89 App - Verificando redirecionamento: Objectlocation: "/dashboard"precisa_redefinir_senha: falseuser: "shardersfx@gmail.com"userType: "staff"[[Prototype]]: Object
+chunk-RPCDYKBN.js?v=ed959132:521 Warning: validateDOMNesting(...): <a> cannot appear as a descendant of <a>.
+    at a
+    at a
+    at https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ed959132:337:18
+    at div
+    at aside
+    at Sidebar (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/layout/sidebar.tsx?t=1747685781685:124:22)
+    at div
+    at MainLayout (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/layout/main-layout.tsx?t=1747685781685:65:30)
+    at PasswordCheck (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/App.tsx?t=1747685841135&v=3P6SkmrHEzS2Km1_Ark2D:46:26)
+    at Route (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ed959132:323:16)
+    at Switch (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ed959132:379:17)
+    at App (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/App.tsx?t=1747685841135&v=3P6SkmrHEzS2Km1_Ark2D:99:73)
+    at AuthProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/hooks/use-auth.tsx?t=1747685781685:81:32)
+    at Provider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-E7IAXTU4.js?v=ed959132:38:15)
+    at TooltipProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=ed959132:61:5)
+    at ThemeProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/src/components/ui/theme-provider.tsx:25:3)
+    at QueryClientProvider (https://d9ad5041-d1af-4f41-a09a-2cf9debfdfd9-00-1km8c6eanlivp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ed959132:2805:3)
+    at AppWithProviders
