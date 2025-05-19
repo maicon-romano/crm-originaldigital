@@ -567,6 +567,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Atualizar o objeto client para a resposta
           client.googleDriveFolderId = folderId;
           
+          // Compartilhar a pasta com o email do cliente
+          try {
+            const { shareFolderWithUser } = require('./share-drive');
+            console.log(`Compartilhando pasta ${folderId} com o email ${validatedData.email}`);
+            const shareResult = await shareFolderWithUser(folderId, validatedData.email);
+            
+            if (shareResult.success) {
+              console.log(`Pasta compartilhada com sucesso com o email ${validatedData.email}`);
+              // Atualizar o cliente com o link da pasta
+              await storage.updateClient(client.id, { 
+                googleDriveFolderUrl: shareResult.folderUrl 
+              });
+              
+              // Atualizar no Firestore também
+              if (firestoreClientId) {
+                await updateFirestoreClient(firestoreClientId, { 
+                  googleDriveFolderUrl: shareResult.folderUrl 
+                });
+              }
+              
+              client.googleDriveFolderUrl = shareResult.folderUrl;
+            } else {
+              console.warn(`Falha ao compartilhar pasta, mas o link foi salvo: ${shareResult.folderUrl}`);
+            }
+          } catch (shareError) {
+            console.error('Erro ao compartilhar pasta:', shareError);
+          }
+          
           console.log(`Estrutura de pastas criada com sucesso para o cliente ${validatedData.companyName}, ID da pasta: ${folderId}`);
         } else {
           console.warn(`Não foi possível criar a estrutura de pastas para o cliente ${validatedData.companyName}`);
