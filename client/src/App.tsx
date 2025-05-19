@@ -44,14 +44,14 @@ function PasswordCheck({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-import { Navigate } from 'wouter';
+import { Redirect } from 'wouter';
 
 // Client route protection component
 function NoClientAccess({ children }: { children: React.ReactNode }) {
   const { isClient } = useAuth();
   
   if (isClient) {
-    return <Navigate to="/dashboard" />;
+    return <Redirect to="/dashboard" />;
   }
   
   return <>{children}</>;
