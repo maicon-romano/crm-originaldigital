@@ -510,16 +510,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (emailResult.success) {
               console.log(`Email de convite enviado com sucesso para ${validatedData.email}`);
+              
+              // Enviar o mesmo email com o serviço de backup para garantir
+              try {
+                console.log(`Enviando email de backup via email-resend para ${validatedData.email}`);
+                const resendResult = await require('./email-resend').sendInvitationEmail({
+                  to: validatedData.email,
+                  name: validatedData.contactName,
+                  password: tempPassword,
+                  role: 'Cliente'
+                });
+                console.log('Resultado do envio alternativo:', resendResult);
+              } catch (backupError) {
+                console.error('Erro ao enviar email de backup:', backupError);
+              }
             } else {
               console.error(`Falha ao enviar email: ${emailResult.message}`);
               // Tentar envio alternativo usando email-resend
-              const resendResult = await require('./email-resend').sendInvitationEmail({
-                to: validatedData.email,
-                name: validatedData.contactName,
-                password: tempPassword,
-                role: 'Cliente'
-              });
-              console.log('Resultado do envio alternativo:', resendResult);
+              try {
+                console.log(`Tentando email alternativo para ${validatedData.email}`);
+                const resendResult = await require('./email-resend').sendInvitationEmail({
+                  to: validatedData.email,
+                  name: validatedData.contactName,
+                  password: tempPassword,
+                  role: 'Cliente'
+                });
+                console.log('Resultado do envio alternativo:', resendResult);
+              } catch (altError) {
+                console.error('Erro ao enviar email alternativo:', altError);
+              }
             }
           } catch (emailError) {
             console.error('Erro ao enviar email de convite:', emailError);
