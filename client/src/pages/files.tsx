@@ -184,7 +184,7 @@ export default function FilesPage() {
                       {client.googleDriveFolderId ? (
                         <Button
                           variant="outline"
-                          onClick={() => openFolder(client.id)}
+                          onClick={() => openFolder(client.id.toString())}
                           disabled={isLoading}
                           className="gap-2"
                         >

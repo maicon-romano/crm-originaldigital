@@ -43,6 +43,9 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
+  
+  // Firestore operations
+  updateFirestoreClient(clientId: string, data: any): Promise<boolean>;
 
   // Clients
   getClient(id: number): Promise<Client | undefined>;
@@ -216,6 +219,18 @@ export class MemStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     return this.users.delete(id);
+  }
+  
+  // Método para atualizar cliente no Firestore
+  async updateFirestoreClient(clientId: string, data: any): Promise<boolean> {
+    try {
+      const { updateFirestoreClient } = require('./firebase-admin');
+      await updateFirestoreClient(clientId, data);
+      return true;
+    } catch (error) {
+      console.error('Erro ao atualizar cliente no Firestore:', error);
+      return false;
+    }
   }
 
   // Clients
