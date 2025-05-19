@@ -157,9 +157,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user;
   
   // Check if it's first login or if password needs to be changed
-  const precisa_redefinir_senha = !!user?.precisa_redefinir_senha || 
-    // Checar se é primeiro login para QUALQUER tipo de usuário (cliente, staff ou admin)
-    (auth.currentUser?.metadata.creationTime === auth.currentUser?.metadata.lastSignInTime);
+  // Esta verificação funciona para qualquer tipo de usuário (cliente, staff ou admin)
+  // 1. Verificamos a flag 'precisa_redefinir_senha' que é definida no servidor
+  // 2. Verificamos se é o primeiro login comparando as datas de criação e login
+  const precisa_redefinir_senha = Boolean(
+    user?.precisa_redefinir_senha || 
+    (auth.currentUser && 
+     auth.currentUser.metadata.creationTime === auth.currentUser.metadata.lastSignInTime)
+  );
   
   // Função para atualizar o usuário após mudar a senha
   const updateUserAfterPasswordChange = async (): Promise<void> => {

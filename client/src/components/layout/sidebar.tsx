@@ -27,6 +27,7 @@ interface NavLink {
   icon: React.ReactNode;
   text: string;
   adminOnly?: boolean;
+  staffOnly?: boolean;  // Nova propriedade que indica que o link é apenas para staff e admin
 }
 
 interface SidebarLinkProps {
@@ -36,13 +37,19 @@ interface SidebarLinkProps {
   isActive?: boolean;
   collapsed?: boolean;
   adminOnly?: boolean;
+  staffOnly?: boolean;  // Nova propriedade para indicar se o link é apenas para staff e admin
 }
 
-const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false }: SidebarLinkProps) => {
-  const { user, isAdmin, isStaff } = useAuth();
+const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false, staffOnly = false }: SidebarLinkProps) => {
+  const { user, isAdmin, isStaff, isClient } = useAuth();
 
   // Se o link for apenas para admin e o usuário não for admin, não mostra o link
   if (adminOnly && !isAdmin) {
+    return null;
+  }
+
+  // Se o link for apenas para staff/admin e o usuário for cliente, não mostra o link
+  if (staffOnly && isClient) {
     return null;
   }
 
@@ -56,6 +63,14 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false 
       href === '/expenses' ||
       href === '/settings'
     ) {
+      return null;
+    }
+  }
+  
+  // Restrições específicas para clientes - garantia adicional de segurança
+  if (isClient) {
+    // Clientes não podem acessar a página de clientes
+    if (href === '/clients') {
       return null;
     }
   }
@@ -122,7 +137,8 @@ export function Sidebar() {
       href: '/clients',
       icon: <Users className="h-5 w-5" />,
       text: 'Clientes',
-      adminOnly: false
+      adminOnly: false,
+      staffOnly: true  // Essa propriedade indica que apenas staff e admin podem ver
     },
     {
       href: '/projects',

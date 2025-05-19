@@ -73,17 +73,21 @@ export default function App() {
 
   console.log("App - Verificando redirecionamento:", {
     user: user?.email,
+    userType: user?.userType,
     precisa_redefinir_senha,
     location
   });
 
   useEffect(() => {
-    // Apenas redirecionar se o usuário estiver logado, tiver a flag marcada, e não estiver já na página
-    if (!isLoading && user && user.precisa_redefinir_senha === true && location !== '/change-password') {
-      console.log("Redirecionando para /change-password devido a user.precisa_redefinir_senha=true");
-      navigate("/change-password");
+    // Se o usuário estiver logado e não estiver na página de troca de senha
+    if (!isLoading && user && location !== '/change-password') {
+      // Verificar se precisa redefinir senha (qualquer tipo de usuário - cliente, staff ou admin)
+      if (precisa_redefinir_senha === true) {
+        console.log("Usuário precisa redefinir senha. Redirecionando para /change-password");
+        navigate("/change-password");
+      }
     }
-  }, [isLoading, user, navigate, location]);
+  }, [isLoading, user, precisa_redefinir_senha, navigate, location]);
 
   return (
     <Switch>
