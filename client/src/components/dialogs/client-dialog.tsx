@@ -123,8 +123,10 @@ export default function ClientDialog({
     }
   }, [client, form]);
 
-  const onSubmit = (values: Client) => {
+  const onSubmit = async (values: Client) => {
     try {
+      console.log("Iniciando envio do formulário de cliente");
+      
       // Convert numeric fields before sending
       const processedValues = {
         ...values,
@@ -138,39 +140,45 @@ export default function ClientDialog({
           title: "Criando estrutura de pastas",
           description: "Estamos criando a estrutura de pastas no Google Drive para este cliente. Isso pode levar alguns segundos.",
         });
+        
+        // ⚠️ IMPORTANTE: Garantir que o formulário seja resetado totalmente
+        // Apenas se for um novo cliente
+        console.log("Preparando para resetar formulário (novo cliente)");
+        
+        // Usando setTimeout para garantir que o reset aconteça após o processamento
+        setTimeout(() => {
+          console.log("Executando reset do formulário via timeout");
+          form.reset({
+            companyName: "",
+            contactName: "",
+            email: "",
+            phone: "",
+            cnpjCpf: "",
+            address: "",
+            city: "",
+            state: "",
+            website: "",
+            instagram: "",
+            facebook: "",
+            linkedin: "",
+            youtube: "",
+            tiktok: "",
+            paymentDay: "",
+            contractValue: "",
+            contractStart: "",
+            contractEnd: "",
+            category: "",
+            description: "",
+            observations: "",
+            status: "active", 
+            paymentMethod: "",
+            servicesPlatforms: ""
+          });
+        }, 500);
       }
       
+      // Chamar a função de salvamento
       onSave(processedValues as Client);
-      
-      // Limpar o formulário após criar um novo cliente
-      if (!client) {
-        form.reset({
-          companyName: "",
-          contactName: "",
-          email: "",
-          phone: "",
-          cnpjCpf: "",
-          address: "",
-          city: "",
-          state: "",
-          website: "",
-          instagram: "",
-          facebook: "",
-          linkedin: "",
-          youtube: "",
-          tiktok: "",
-          paymentDay: "",
-          contractValue: "",
-          contractStart: "",
-          contractEnd: "",
-          category: "",
-          description: "",
-          observations: "",
-          status: "active",
-          paymentMethod: "",
-          servicesPlatforms: ""
-        });
-      }
       
       toast({
         title: client ? "Cliente atualizado" : "Cliente criado",

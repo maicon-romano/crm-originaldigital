@@ -53,9 +53,14 @@ export function ClientsPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       setDialogOpen(false);
       toast({
-        title: 'Cliente criado',
-        description: 'O cliente foi criado com sucesso',
+        title: 'Cliente criado com sucesso',
+        description: 'O cliente foi registrado e o acesso está configurado. Um email foi enviado com as credenciais de acesso.',
       });
+      
+      // Garantir que o diálogo fechou completamente
+      setTimeout(() => {
+        setSelectedClient(undefined);
+      }, 100);
     },
     onError: (error) => {
       setIsCreatingClient(false);
