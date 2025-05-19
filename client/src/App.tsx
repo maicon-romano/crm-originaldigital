@@ -44,25 +44,23 @@ function PasswordCheck({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-import { Redirect } from 'wouter';
+// Componente para redirecionar usuários do tipo cliente
+function NoClientAccess({ children }: { children: ReactNode }) {
+  const { isClient, isLoading, isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
 
-// Client route protection component
-function NoClientAccess({ children }: { children: React.ReactNode }) {
-  const { isClient } = useAuth();
-  
-  if (isClient) {
-    return <Redirect to="/dashboard" />;
-  }
-  
+  useEffect(() => {
+    // Se o usuário for cliente, redireciona para o dashboard
+    if (!isLoading && isClient) {
+      navigate("/dashboard");
+    }
+  }, [isLoading, isClient, navigate]);
+
+  if (isLoading || !isAuthenticated) return null;
+  if (isClient) return null;
+
   return <>{children}</>;
 }
-
-// Update the clients route to use protection
-<Route path="/clients">
-  <NoClientAccess>
-    <ClientsPage />
-  </NoClientAccess>
-</Route>
 
 
 export default function App() {

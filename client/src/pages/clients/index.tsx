@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
 import { Client } from '@/components/dialogs/client-dialog';
 import ClientDialog from '@/components/dialogs/client-dialog';
 import { DataTable } from '@/components/ui/data-table';
@@ -10,7 +11,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ColumnDef } from '@tanstack/react-table';
 import { apiRequest } from '@/lib/queryClient';
-import { Plus, Eye, Edit, Trash } from 'lucide-react';
+import { Plus, Eye, Edit, Trash, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -28,6 +29,7 @@ export function ClientsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | undefined>(undefined);
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: clients, isLoading } = useQuery<Client[]>({
@@ -36,26 +38,30 @@ export function ClientsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (client: Client) => {
+      setIsCreatingClient(true);
       const res = await apiRequest('POST', '/api/clients', client);
       return res.json();
     },
     onMutate: () => {
       // Set loading state while creating
       queryClient.setQueryData(['/api/clients'], (old: any[]) => {
-        return [...(old || []), { id: 'temp', companyName: 'Creating...', status: 'pending' }];
+        return [...(old || []), { id: 'temp', companyName: 'Criando novo cliente...', status: 'pending' }];
       });
     },
     onSuccess: () => {
+      setIsCreatingClient(false);
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      setDialogOpen(false);
       toast({
-        title: 'Client created',
-        description: 'The client has been created successfully',
+        title: 'Cliente criado',
+        description: 'O cliente foi criado com sucesso',
       });
     },
     onError: (error) => {
+      setIsCreatingClient(false);
       toast({
-        title: 'Error',
-        description: `Failed to create client: ${error}`,
+        title: 'Erro',
+        description: `Falha ao criar cliente: ${error}`,
         variant: 'destructive',
       });
     },
@@ -265,15 +271,21 @@ export function ClientsPage() {
       </div>
 
       <Card>
-        <CardHeader className="pb-1">
-          <CardTitle>All Clients</CardTitle>
+        <CardHeader className="pb-1 flex justify-between items-center">
+          <CardTitle>Clientes</CardTitle>
+          {isCreatingClient && (
+            <div className="flex items-center text-sm text-amber-600">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Criando novo cliente...
+            </div>
+          )}
         </CardHeader>
         
         <DataTable
           columns={columns}
           data={clients || []}
           searchKey="companyName"
-          searchPlaceholder="Search clients..."
+          searchPlaceholder="Buscar clientes..."
           filters={[statusFilter, categoryFilter]}
         />
       </Card>
