@@ -689,21 +689,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Tentando deletar cliente com ID do Firestore: ${clientId}`);
         
         try {
-          // Deletar do Firestore
+          // Primeiro, obter os dados do cliente antes de deletar
           const firestoreDb = admin.firestore();
-          await firestoreDb.collection('clientes').doc(clientId).delete();
-          
-          // Verificar se este cliente tem um usuário associado
           const clientDoc = await firestoreDb.collection('clientes').doc(clientId).get();
           const clientData = clientDoc.data();
           
-          if (clientData && clientData.userId) {
-            // Excluir o usuário do Firebase Authentication
+          // Verificar se o cliente existe
+          if (!clientDoc.exists || !clientData) {
+            return res.status(404).json({ message: "Cliente não encontrado" });
+          }
+          
+          // Deletar o cliente do Firestore
+          await firestoreDb.collection('clientes').doc(clientId).delete();
+          console.log(`Cliente com ID ${clientId} excluído do Firestore com sucesso`);
+          
+          // Se este cliente tem um usuário associado, excluir também
+          if (clientData.userId) {
             try {
+              // Excluir o usuário do Firestore
+              await firestoreDb.collection('users').doc(clientData.userId).delete();
+              console.log(`Usuário associado (${clientData.userId}) foi excluído do Firestore`);
+              
+              // Excluir o usuário do Firebase Authentication
               await admin.auth().deleteUser(clientData.userId);
               console.log(`Usuário associado (${clientData.userId}) foi excluído do Firebase Auth`);
             } catch (authError: any) {
-              console.error(`Erro ao excluir o usuário do Firebase Auth: ${authError.message}`);
+              console.error(`Erro ao excluir o usuário associado: ${authError.message}`);
+              // Continuar mesmo se falhar a exclusão do usuário
             }
           }
           
