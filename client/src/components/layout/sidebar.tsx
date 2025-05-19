@@ -27,7 +27,7 @@ interface NavLink {
   icon: React.ReactNode;
   text: string;
   adminOnly?: boolean;
-  staffOnly?: boolean;  // Nova propriedade que indica que o link é apenas para staff e admin
+  staffOnly?: boolean;  // Propriedade que indica que o link é apenas para staff e admin
 }
 
 interface SidebarLinkProps {
@@ -138,8 +138,7 @@ export function Sidebar() {
       icon: <Users className="h-5 w-5" />,
       text: 'Clientes',
       adminOnly: false,
-      staffOnly: true,
-      hideFromClient: true  // Nova propriedade para esconder completamente de clientes
+      staffOnly: true
     },
     {
       href: '/projects',

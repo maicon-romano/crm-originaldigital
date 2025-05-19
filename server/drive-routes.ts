@@ -1,7 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { storage } from './storage';
 import { getPublicFolderLink } from './share-drive';
-import { getFirestoreClientById } from './firebase-admin';
+import { getFirestoreClientById, updateFirestoreClient } from './firebase-admin';
 
 /**
  * Registra as rotas relacionadas ao Google Drive no aplicativo Express
@@ -50,7 +50,7 @@ export function registerDriveRoutes(app: Express): void {
         const folderUrl = getPublicFolderLink(client.googleDriveFolderId);
         
         // Atualizar o cliente com a URL para uso futuro
-        await storage.updateFirestoreClient(clientId, { googleDriveFolderUrl: folderUrl });
+        await updateFirestoreClient(clientId, { googleDriveFolderUrl: folderUrl });
         
         return res.json({
           success: true,
