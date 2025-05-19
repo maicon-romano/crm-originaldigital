@@ -297,17 +297,26 @@ export function Sidebar() {
 
           <div className="mt-8 pt-4 border-t border-gray-700">
             <div className="space-y-1">
-              {secondaryLinks.map((link) => (
-                <SidebarLink
-                  key={link.href}
-                  href={link.href}
-                  icon={link.icon}
-                  text={link.text}
-                  isActive={location === link.href}
-                  collapsed={collapsed}
-                  adminOnly={link.adminOnly}
-                />
-              ))}
+              {secondaryLinks.map((link) => {
+                // Mesma verificação rigorosa para links secundários
+                if ((isClient || user?.userType === 'client' || user?.role === 'cliente') && 
+                    (link.href === '/clients' || link.href === '/dashboard' || link.staffOnly)) {
+                  return null;
+                }
+                
+                return (
+                  <SidebarLink
+                    key={link.href}
+                    href={link.href}
+                    icon={link.icon}
+                    text={link.text}
+                    isActive={location === link.href}
+                    collapsed={collapsed}
+                    adminOnly={link.adminOnly}
+                    staffOnly={link.staffOnly}
+                  />
+                );
+              })}
             </div>
           </div>
         </nav>
