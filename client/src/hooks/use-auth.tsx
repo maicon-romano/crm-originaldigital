@@ -43,6 +43,16 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
       // Se encontrou o usuário no Firestore, use essas informações
       console.log("Dados completos do usuário no Firestore:", firestoreUser);
       
+      // VERIFICAÇÃO MAIS ROBUSTA para clientes e para a necessidade de troca de senha
+      // Isso garante detecção correta para TODOS os tipos de usuário
+      const isClientUser = firestoreUser.userType === 'client' || firestoreUser.role === 'cliente';
+      
+      // Lógica aprimorada para detecção de necessidade de troca de senha
+      // Principalmente para usuários tipo cliente
+      const needsPasswordReset: boolean = 
+        firestoreUser.precisa_redefinir_senha === true || 
+        !!(firestoreUser.lastTempPassword && firestoreUser.lastTempPassword.length > 0);
+      
       return {
         id: firestoreUser.id,
         name: firestoreUser.name,
@@ -50,7 +60,7 @@ const mapFirebaseUserToUser = async (firebaseUser: FirebaseUser): Promise<User> 
         role: firestoreUser.role,
         userType: firestoreUser.userType,
         clientId: firestoreUser.clientId,
-        precisa_redefinir_senha: firestoreUser.precisa_redefinir_senha || false,
+        precisa_redefinir_senha: needsPasswordReset === true, // Forçar para boolean
         lastTempPassword: firestoreUser.lastTempPassword || null
       };
     }

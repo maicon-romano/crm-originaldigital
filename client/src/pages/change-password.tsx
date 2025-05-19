@@ -132,9 +132,17 @@ export default function ChangePasswordPage() {
         description: 'Sua senha foi atualizada com sucesso.',
       });
       
-      // Redirecionar para a página inicial após 2 segundos
+      // Redirecionar de acordo com o tipo de usuário após 2 segundos
       setTimeout(() => {
-        navigate('/');
+        // Clientes vão para a página de projetos
+        if (user.userType === 'client' || user.role === 'cliente') {
+          console.log(`Redirecionando cliente ${user.email} para /projects após troca de senha`);
+          navigate('/projects');
+        } else {
+          // Admin e staff vão para dashboard
+          console.log(`Redirecionando usuário ${user.email} (${user.userType}) para dashboard após troca de senha`);
+          navigate('/');
+        }
       }, 2000);
       
     } catch (error: any) {
