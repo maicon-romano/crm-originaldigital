@@ -14,6 +14,13 @@ const CLIENTES_FOLDER_ID = '18abqgDcOAkIzp79CYO9EpH2RrgluPnBI';
 // Sempre habilitado em produção
 const ENABLE_GOOGLE_DRIVE = true;
 
+// Níveis de acesso para compartilhamento de pastas no Google Drive
+const DRIVE_PERMISSION_ROLES = {
+  READER: 'reader',       // Somente leitura
+  COMMENTER: 'commenter', // Leitura e comentários
+  WRITER: 'writer'        // Leitura, comentários e edição
+};
+
 // Estrutura das pastas do cliente
 const FOLDER_STRUCTURE = [
   '01 - Briefing',
