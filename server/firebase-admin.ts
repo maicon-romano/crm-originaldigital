@@ -77,6 +77,10 @@ export interface FirestoreClient {
   googleDriveFolderId?: string; // ID da pasta no Google Drive
   googleDriveFolderUrl?: string; // URL público da pasta no Google Drive
   userId?: string;        // ID do usuário associado (se existir)
+  precisa_redefinir_senha?: boolean; // Indica se o cliente precisa trocar a senha no primeiro login
+  username?: string;      // Nome de usuário para login
+  role?: string;          // Papel do cliente no sistema (geralmente 'cliente')
+  userType?: string;      // Tipo de usuário (geralmente 'client')
   createdAt: number;      // Timestamp
   updatedAt: number;      // Timestamp
 }

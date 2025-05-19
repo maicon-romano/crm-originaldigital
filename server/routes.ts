@@ -20,6 +20,8 @@ import {
 import { createClientFolderStructure } from './google-drive-service';
 // Importar serviço de email
 import { sendInvitationEmail } from './email-service';
+// Importar para compartilhamento de pastas
+import { shareFolderWithUser } from './share-drive';
 // Importar registradores de rotas
 import { registerEmailRoutes } from './email-routes';
 import { registerDriveRoutes } from './drive-routes';
@@ -458,12 +460,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firestoreClientId = firestoreClient.id;
         console.log(`Cliente criado no Firestore com ID: ${firestoreClientId}`);
         
-        // 3. Criar um usuário do tipo cliente
+        // 3. Criar apenas um registro de autenticação para o cliente (sem duplicar na coleção de usuários)
         try {
           // Gerar senha temporária aleatória
           const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
           
-          // Criar usuário no Firebase Authentication
+          // Criar usuário no Firebase Authentication apenas para autenticação
           console.log(`Criando usuário no Firebase Auth para email: ${validatedData.email}`);
           const userRecord = await admin.auth().createUser({
             email: validatedData.email,
@@ -474,42 +476,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Criado usuário no Firebase Auth com UID: ${userRecord.uid}`);
           
-          // Não vamos mais criar registro na coleção de usuários para clientes
-          // Vamos apenas atualizar o registro do cliente na coleção 'clientes'
-          // com as informações necessárias
-          console.log(`Atualizando cliente no Firestore com os dados de autenticação`);
+          // Atualizar apenas o cliente no Firestore com os dados de autenticação
+          // Não criamos registro na coleção 'usuarios' para manter a separação
           firestoreUserId = userRecord.uid;
           console.log(`Usuário cliente criado com ID: ${firestoreUserId}`);
           
-          // Atualizar o cliente no Firestore com o ID do usuário e os dados necessários
+          // Atualizar o cliente no Firestore com o ID do usuário
           if (firestoreClientId) {
             await updateFirestoreClient(firestoreClientId, { 
               userId: firestoreUserId,
-              userType: 'client',
               role: 'cliente',
+              userType: 'client',
               username: validatedData.email.split('@')[0],
               precisa_redefinir_senha: true
             });
             console.log(`Cliente no Firestore atualizado com userId: ${firestoreUserId}`);
           }
           
-          // Enviar email de convite com senha temporária
+          // Enviar email de convite com o mesmo método usado para administradores
+          // (usando email-resend.ts, que já sabemos que funciona)
           try {
+            // Import dinâmico para usar o sistema de email correto
+            const emailResend = await import('./email-resend');
             console.log(`Enviando email de convite para: ${validatedData.email}`);
-            const emailResult = await sendInvitationEmail({
+            
+            const emailResult = await emailResend.sendInvitationEmail({
               to: validatedData.email,
               name: validatedData.contactName,
               password: tempPassword,
               role: 'Cliente'
             });
             
-            if (emailResult.success) {
+            console.log('Resultado do envio de email:', emailResult);
+            
+            if (emailResult && emailResult.success) {
               console.log(`Email de convite enviado com sucesso para ${validatedData.email}`);
             } else {
-              console.error(`Falha ao enviar email: ${emailResult.message}`);
+              console.error(`Falha ao enviar email: ${emailResult ? emailResult.message : 'Erro desconhecido'}`);
             }
           } catch (emailError) {
             console.error('Erro ao enviar email de convite:', emailError);
+            
+            // Log detalhado do erro para diagnóstico
+            if (emailError instanceof Error) {
+              console.error('Detalhes do erro:', emailError.message);
+              console.error('Stack trace:', emailError.stack);
+            }
           }
         } catch (userError) {
           console.error('Erro ao criar usuário para o cliente:', userError);
@@ -537,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Compartilhar a pasta com o email do cliente
           try {
-            const { shareFolderWithUser } = require('./share-drive');
+            // Usar a importação já feita no topo do arquivo
             console.log(`Compartilhando pasta ${folderId} com o email ${validatedData.email}`);
             const shareResult = await shareFolderWithUser(folderId, validatedData.email);
             
@@ -584,19 +596,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/clients/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
-      }
-
-      const validatedData = insertClientSchema.partial().parse(req.body);
-      const client = await storage.updateClient(id, validatedData);
+      const clientId = req.params.id;
+      // Verificar se é um ID numérico (PostgreSQL) ou string (Firestore)
+      const isNumericId = !isNaN(parseInt(clientId));
       
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
+      const validatedData = insertClientSchema.partial().parse(req.body);
+      let updatedClient = null;
+      
+      if (isNumericId) {
+        // Atualizar no banco relacional
+        const numericId = parseInt(clientId);
+        console.log(`Atualizando cliente com ID numérico: ${numericId}`);
+        updatedClient = await storage.updateClient(numericId, validatedData);
+      } else {
+        // É um ID do Firestore, atualizar no Firestore
+        console.log(`Atualizando cliente com ID do Firestore: ${clientId}`);
+        
+        try {
+          // Converter os dados validados para o formato do Firestore
+          const firestoreData: Partial<FirestoreClient> = {};
+          
+          // Mapear campos do banco relacional para o Firestore
+          Object.entries(validatedData).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+              firestoreData[key as keyof FirestoreClient] = value as any;
+            }
+          });
+          
+          // Adicionar timestamp de atualização
+          firestoreData.updatedAt = Date.now();
+          
+          // Atualizar no Firestore
+          await updateFirestoreClient(clientId, firestoreData);
+          
+          // Buscar o cliente atualizado
+          const firestoreDb = admin.firestore();
+          const clientDoc = await firestoreDb.collection('clientes').doc(clientId).get();
+          updatedClient = { id: clientId, ...clientDoc.data() } as any;
+          
+          console.log(`Cliente com ID ${clientId} atualizado no Firestore com sucesso`);
+        } catch (firestoreError: any) {
+          console.error(`Erro ao atualizar cliente no Firestore: ${firestoreError.message}`);
+          return res.status(500).json({ message: `Erro ao atualizar cliente no Firestore: ${firestoreError.message}` });
+        }
+      }
+      
+      if (!updatedClient) {
+        return res.status(404).json({ message: "Cliente não encontrado" });
       }
 
-      return res.status(200).json(client);
+      return res.status(200).json(updatedClient);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
@@ -608,20 +657,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/clients/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+      const clientId = req.params.id;
+      
+      // Verificar se é um ID numérico (PostgreSQL) ou string (Firestore)
+      const isNumericId = !isNaN(parseInt(clientId));
+      let success = false;
+      
+      if (isNumericId) {
+        // Deletar do banco relacional
+        const numericId = parseInt(clientId);
+        console.log(`Tentando deletar cliente com ID numérico: ${numericId}`);
+        success = await storage.deleteClient(numericId);
+      } else {
+        // É um ID do Firestore, deletar do Firestore
+        console.log(`Tentando deletar cliente com ID do Firestore: ${clientId}`);
+        
+        try {
+          // Deletar do Firestore
+          const firestoreDb = admin.firestore();
+          await firestoreDb.collection('clientes').doc(clientId).delete();
+          
+          // Verificar se este cliente tem um usuário associado
+          const clientDoc = await firestoreDb.collection('clientes').doc(clientId).get();
+          const clientData = clientDoc.data();
+          
+          if (clientData && clientData.userId) {
+            // Excluir o usuário do Firebase Authentication
+            try {
+              await admin.auth().deleteUser(clientData.userId);
+              console.log(`Usuário associado (${clientData.userId}) foi excluído do Firebase Auth`);
+            } catch (authError: any) {
+              console.error(`Erro ao excluir o usuário do Firebase Auth: ${authError.message}`);
+            }
+          }
+          
+          success = true;
+          console.log(`Cliente com ID ${clientId} excluído do Firestore com sucesso`);
+        } catch (firestoreError: any) {
+          console.error(`Erro ao excluir cliente do Firestore: ${firestoreError.message}`);
+          return res.status(500).json({ message: `Erro ao excluir cliente do Firestore: ${firestoreError.message}` });
+        }
       }
-
-      const success = await storage.deleteClient(id);
+      
       if (!success) {
-        return res.status(404).json({ message: "Client not found" });
+        return res.status(404).json({ message: "Cliente não encontrado" });
       }
 
       return res.status(204).send();
     } catch (error) {
-      console.error("Delete client error:", error);
-      return res.status(500).json({ message: "Internal server error" });
+      console.error("Erro ao excluir cliente:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
