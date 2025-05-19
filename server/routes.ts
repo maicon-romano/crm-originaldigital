@@ -503,13 +503,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`Cliente no Firestore atualizado com userId: ${firestoreUserId}`);
           }
           
-          // Enviar email de convite com o mesmo método usado para administradores
-          // (usando email-resend.ts, que já sabemos que funciona)
+          // IMPORTANTE: Enviar email de convite com o mesmo método usado para administradores
+          // Logs detalhados para diagnóstico do problema de envio de email
           try {
             // Import dinâmico para usar o sistema de email correto
             const emailResend = await import('./email-resend');
-            console.log(`Enviando email de convite para: ${validatedData.email}`);
+            console.log(`=== INÍCIO PROCESSO DE ENVIO DE EMAIL ===`);
+            console.log(`Tentando enviar convite para: ${validatedData.email} (${validatedData.contactName})`);
+            console.log(`Senha temporária gerada: ${tempPassword}`);
             
+            // Verificar a chave API do Resend antes do envio
+            const resendApiKey = process.env.RESEND_API_KEY || 're_PNRRiCug_3XnVrdnCXfRzqojZiTjrJAJ6';
+            console.log(`Status da chave API Resend: ${resendApiKey ? 'Configurada' : 'Não configurada'}`);
+            
+            // Enviar o convite
             const emailResult = await emailResend.sendInvitationEmail({
               to: validatedData.email,
               name: validatedData.contactName,
@@ -517,20 +524,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
               role: 'Cliente'
             });
             
-            console.log('Resultado do envio de email:', emailResult);
+            console.log('Resposta do serviço de email:', JSON.stringify(emailResult, null, 2));
             
             if (emailResult && emailResult.success) {
-              console.log(`Email de convite enviado com sucesso para ${validatedData.email}`);
+              console.log(`✅ Email de convite enviado com sucesso para ${validatedData.email}`);
+              // Salvando a senha temporária nos detalhes do cliente para referência futura
+              if (firestoreClientId) {
+                await updateFirestoreClient(firestoreClientId, { 
+                  lastTempPassword: tempPassword, // armazenar temporariamente para referência
+                });
+              }
             } else {
-              console.error(`Falha ao enviar email: ${emailResult ? emailResult.message : 'Erro desconhecido'}`);
+              console.error(`❌ Falha ao enviar email: ${emailResult ? emailResult.message : 'Erro desconhecido'}`);
+              
+              // Mesmo com falha de email, mantemos a senha nos detalhes do cliente para acesso manual
+              if (firestoreClientId) {
+                await updateFirestoreClient(firestoreClientId, { 
+                  lastTempPassword: tempPassword, // armazenar para referência caso email falhe
+                });
+              }
             }
+            console.log(`=== FIM PROCESSO DE ENVIO DE EMAIL ===`);
           } catch (emailError) {
-            console.error('Erro ao enviar email de convite:', emailError);
+            console.error('❌ Erro crítico ao enviar email de convite:', emailError);
             
             // Log detalhado do erro para diagnóstico
             if (emailError instanceof Error) {
               console.error('Detalhes do erro:', emailError.message);
               console.error('Stack trace:', emailError.stack);
+            }
+            
+            // Mesmo com erro, armazenar a senha temporária para poder informar manualmente
+            if (firestoreClientId) {
+              try {
+                await updateFirestoreClient(firestoreClientId, { 
+                  lastTempPassword: tempPassword, // armazenar para referência caso email falhe
+                });
+                console.log('✅ Senha temporária salva nos detalhes do cliente para acesso manual');
+              } catch (updateError) {
+                console.error('Erro ao salvar senha temporária:', updateError);
+              }
             }
           }
         } catch (userError) {

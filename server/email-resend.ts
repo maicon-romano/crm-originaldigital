@@ -104,28 +104,64 @@ const createInvitationTemplate = (params: SendInvitationParams): string => {
  */
 export const sendInvitationEmail = async (params: SendInvitationParams): Promise<{ success: boolean; message: string }> => {
   try {
-    console.log(`Enviando convite para ${params.to} (${params.name}) com papel ${params.role}`);
+    console.log(`⏳ Iniciando envio de convite para ${params.to} (${params.name}) com papel ${params.role}`);
     
-    const htmlContent = createInvitationTemplate(params);
-    
-    // Enviar o email usando o Resend
-    const { data, error } = await resend.emails.send({
-      from: DEFAULT_FROM,
-      to: params.to,
-      subject: 'Convite para acessar o CRM da Original Digital',
-      html: htmlContent,
-    });
-    
-    if (error) {
-      console.error('Erro ao enviar email com Resend:', error);
-      return { success: false, message: `Erro ao enviar email: ${error.message}` };
+    // Verificação de segurança para garantir que todos os parâmetros estão presentes
+    if (!params.to || !params.name || !params.password || !params.role) {
+      console.error('❌ Parâmetros incompletos para envio de email:', { 
+        to: !!params.to, 
+        name: !!params.name, 
+        password: !!params.password, 
+        role: !!params.role 
+      });
+      return { 
+        success: false, 
+        message: 'Parâmetros incompletos para envio de email' 
+      };
     }
     
-    console.log('Email enviado com sucesso:', data);
-    return { 
-      success: true, 
-      message: `Email de convite enviado com sucesso para ${params.to}` 
-    };
+    const htmlContent = createInvitationTemplate(params);
+    console.log('Template HTML gerado com sucesso');
+    
+    // Log para verificação de credenciais
+    console.log(`Tentando enviar email com: 
+      - FROM: ${DEFAULT_FROM} 
+      - TO: ${params.to}
+      - SUBJECT: Convite para acessar o CRM da Original Digital`
+    );
+    
+    // Enviar o email usando o Resend com tratamento de erros reforçado
+    try {
+      const { data, error } = await resend.emails.send({
+        from: DEFAULT_FROM,
+        to: params.to,
+        subject: 'Convite para acessar o CRM da Original Digital',
+        html: htmlContent,
+      });
+      
+      if (error) {
+        console.error('❌ Erro retornado pelo serviço Resend:', error);
+        return { 
+          success: false, 
+          message: `Erro ao enviar email: ${error.message}`,
+          error: error 
+        };
+      }
+      
+      console.log('✅ Email enviado com sucesso:', data);
+      return { 
+        success: true, 
+        message: `Email de convite enviado com sucesso para ${params.to}`,
+        data: data
+      };
+    } catch (sendError) {
+      console.error('❌ Exceção ao enviar email com Resend:', sendError);
+      return { 
+        success: false, 
+        message: `Exceção ao enviar email: ${sendError instanceof Error ? sendError.message : String(sendError)}`,
+        error: sendError
+      };
+    }
   } catch (error) {
     console.error('Erro ao enviar convite:', error);
     return { 
