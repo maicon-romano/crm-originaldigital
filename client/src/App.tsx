@@ -18,6 +18,7 @@ import InvoicesPage from "@/pages/invoices";
 import ExpensesPage from "@/pages/expenses";
 import SupportPage from "@/pages/support";
 import CalendarPage from "@/pages/calendar";
+import FilesPage from "@/pages/files";
 import SettingsPage from "@/pages/settings";
 import UsersPage from "@/pages/users";
 import ProfilePage from "@/pages/profile";
@@ -158,6 +159,14 @@ export default function App() {
               <ExpensesPage />
             </MainLayout>
           </AdminRoute>
+        </PasswordCheck>
+      </Route>
+      
+      <Route path="/files">
+        <PasswordCheck>
+          <MainLayout>
+            <FilesPage />
+          </MainLayout>
         </PasswordCheck>
       </Route>
       
