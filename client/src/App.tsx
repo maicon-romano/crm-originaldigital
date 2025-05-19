@@ -54,14 +54,14 @@ function NoClientAccess({ children }: { children: ReactNode }) {
     if (!isLoading && isClient) {
       console.log("Usuário do tipo cliente tentando acessar área restrita. Redirecionando...");
       navigate("/dashboard");
+      return;
     }
   }, [isLoading, isClient, navigate]);
 
   // Verificações de segurança adicionais para evitar renderização mesmo que o redirecionamento falhe
-  if (isLoading) return null;
-  if (!isAuthenticated) return null;
-  // Se for cliente, não renderiza o conteúdo de forma alguma
-  if (isClient) return null;
+  if (isLoading || !isAuthenticated || isClient) {
+    return null;
+  }
 
   return <>{children}</>;
 }

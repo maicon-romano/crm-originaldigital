@@ -66,7 +66,7 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false,
       return null;
     }
   }
-  
+
   // Restrições específicas para clientes - garantia adicional de segurança
   if (isClient) {
     // Clientes não podem acessar a página de clientes
@@ -276,10 +276,10 @@ export function Sidebar() {
           <div className="space-y-1">
             {mainLinks.map((link) => {
               // Se o usuário for cliente e a página for 'clients', não mostrar o item
-              if (isClient && link.href === '/clients') {
+              if ((isClient && link.href === '/clients') || (isClient && link.staffOnly)) {
                 return null;
               }
-              
+
               return (
                 <SidebarLink
                   key={link.href}
