@@ -430,12 +430,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create client only in Firestore
+      // Criar cliente APENAS no Firestore (1 cópia, evitando a duplicação)
+      // NÃO vamos mais criar um registro no banco de dados relacional
       let firestoreClientId = null;
       let firestoreUserId = null;
+      let client = null; // Referência para o cliente que será retornado
       
       try {
-        // Dados para o Firestore
+        // Dados para o Firestore, guardando somente na coleção "clientes"
         const firestoreClientData: Omit<FirestoreClient, 'createdAt' | 'updatedAt'> = {
           companyName: validatedData.companyName,
           contactName: validatedData.contactName,
