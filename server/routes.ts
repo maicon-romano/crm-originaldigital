@@ -350,14 +350,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client Routes
   app.get("/api/clients", async (req, res) => {
     try {
-      // Buscar clientes do Firestore ao invés do storage relacional
-      const firestoreDb = admin.firestore();
-      const clientsSnapshot = await firestoreDb.collection('clients').get();
+      console.log("Buscando clientes...");
+      // Verificar no banco relacional E no Firestore para garantir dados completos
+      const relationalClients = await storage.getClients();
       
-      const clients = clientsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Buscar também do Firestore
+      const firestoreDb = admin.firestore();
+      const clientsSnapshot = await firestoreDb.collection('clientes').get();
+      
+      console.log(`Clientes encontrados: ${clientsSnapshot.size}`);
+      
+      const firestoreClients = clientsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: parseInt(data.id) || doc.id,
+          companyName: data.companyName,
+          contactName: data.contactName,
+          email: data.email,
+          phone: data.phone,
+          status: data.status,
+          cnpjCpf: data.cnpjCpf,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          contractStart: data.contractStart,
+          googleDriveFolderId: data.googleDriveFolderId
+        };
+      });
+      
+      // Combinar os resultados (prioridade para os registros do Firestore)
+      const clients = [...relationalClients, ...firestoreClients];
 
       console.log("Clientes encontrados:", clients.length);
       return res.status(200).json(clients);
