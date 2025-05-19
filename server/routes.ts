@@ -472,24 +472,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // 3. Criar apenas um registro de autenticação para o cliente (sem duplicar na coleção de usuários)
         try {
-          // Gerar senha temporária aleatória
-          const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+          // Gerar senha temporária aleatória que seja fácil de ler e digitar
+          const tempPassword = Math.random().toString(36).slice(-4) + Math.random().toString(36).slice(-4);
+          let userRecord;
+          let userExists = false;
           
-          // Criar usuário no Firebase Authentication apenas para autenticação
-          console.log(`Criando usuário no Firebase Auth para email: ${validatedData.email}`);
-          const userRecord = await admin.auth().createUser({
-            email: validatedData.email,
-            password: tempPassword,
-            displayName: validatedData.contactName,
-            emailVerified: false,
-          });
-          
-          console.log(`Criado usuário no Firebase Auth com UID: ${userRecord.uid}`);
+          // Primeiro verificar se o usuário já existe
+          try {
+            userRecord = await admin.auth().getUserByEmail(validatedData.email);
+            console.log(`⚠️ Usuário com email ${validatedData.email} já existe no Firebase Auth com UID: ${userRecord.uid}`);
+            firestoreUserId = userRecord.uid;
+            userExists = true;
+            
+            // Atualizar a senha se o usuário já existir
+            await admin.auth().updateUser(userRecord.uid, {
+              password: tempPassword,
+              displayName: validatedData.contactName
+            });
+            console.log(`✅ Senha atualizada para usuário existente: ${userRecord.uid}`);
+            
+          } catch (error: any) {
+            // Se o erro for "user-not-found", criamos um novo usuário
+            if (error.code === 'auth/user-not-found') {
+              console.log(`Criando novo usuário no Firebase Auth para email: ${validatedData.email}`);
+              try {
+                userRecord = await admin.auth().createUser({
+                  email: validatedData.email,
+                  password: tempPassword,
+                  displayName: validatedData.contactName,
+                  emailVerified: false,
+                });
+                
+                console.log(`✅ Criado usuário no Firebase Auth com UID: ${userRecord.uid}`);
+                firestoreUserId = userRecord.uid;
+              } catch (createError: any) {
+                console.error(`❌ Erro ao criar usuário: ${createError.message}`);
+                // Mesmo com falha na criação, continuamos o processo para enviar email
+                // Em caso de falha, vamos recuperar UID existente
+                try {
+                  // Tentar recuperar o usuário mesmo se a criação falhar
+                  const existingUser = await admin.auth().getUserByEmail(validatedData.email);
+                  console.log(`🔄 Recuperado usuário existente: ${existingUser.uid}`);
+                  firestoreUserId = existingUser.uid;
+                  userRecord = existingUser;
+                  
+                  // Atualizar a senha para ter acesso
+                  await admin.auth().updateUser(existingUser.uid, {
+                    password: tempPassword,
+                    displayName: validatedData.contactName
+                  });
+                } catch (recoverError) {
+                  console.error(`❌ Não foi possível recuperar o usuário existente: ${recoverError}`);
+                }
+              }
+            } else {
+              console.error(`❌ Erro ao verificar usuário: ${error.message}`);
+            }
+          }
           
           // Atualizar apenas o cliente no Firestore com os dados de autenticação
-          // Não criamos registro na coleção 'usuarios' para manter a separação
-          firestoreUserId = userRecord.uid;
-          console.log(`Usuário cliente criado com ID: ${firestoreUserId}`);
+          // Independente de ser novo usuário ou existente
+          console.log(`Atualizando cliente no Firestore com dados de usuário...`);
           
           // Atualizar o cliente no Firestore com o ID do usuário
           if (firestoreClientId) {
@@ -498,25 +541,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
               role: 'cliente',
               userType: 'client',
               username: validatedData.email.split('@')[0],
-              precisa_redefinir_senha: true
+              precisa_redefinir_senha: true,
+              lastTempPassword: tempPassword // Armazenar senha temporária para referência
             });
-            console.log(`Cliente no Firestore atualizado com userId: ${firestoreUserId}`);
+            console.log(`✅ Cliente no Firestore atualizado com userId: ${firestoreUserId}`);
           }
           
-          // IMPORTANTE: Enviar email de convite com o mesmo método usado para administradores
-          // Logs detalhados para diagnóstico do problema de envio de email
+          // ENVIO DE EMAIL OBRIGATÓRIO - SEMPRE DEVE FUNCIONAR
+          console.log(`🔹 INÍCIO DO ENVIO DE EMAIL DE CONVITE 🔹`);
+          console.log(`Dados do cliente para envio:
+            - Email: ${validatedData.email}
+            - Nome: ${validatedData.contactName}
+            - Senha: ${tempPassword}
+          `);
+          
+          // Primeiro, armazenar a senha nos dados do cliente (independente do sucesso do email)
+          if (firestoreClientId) {
+            try {
+              await updateFirestoreClient(firestoreClientId, { 
+                lastTempPassword: tempPassword, // armazenar para referência obrigatória
+                username: validatedData.email.split('@')[0] // sempre definir o username
+              });
+              console.log(`✅ Senha temporária salva no documento do cliente`);
+            } catch (updateError) {
+              console.error(`❌ Erro ao salvar senha temporária:`, updateError);
+            }
+          }
+          
+          // Tentar enviar o e-mail - estrutura simplificada e robusta
           try {
-            // Import dinâmico para usar o sistema de email correto
             const emailResend = await import('./email-resend');
-            console.log(`=== INÍCIO PROCESSO DE ENVIO DE EMAIL ===`);
-            console.log(`Tentando enviar convite para: ${validatedData.email} (${validatedData.contactName})`);
-            console.log(`Senha temporária gerada: ${tempPassword}`);
             
-            // Verificar a chave API do Resend antes do envio
-            const resendApiKey = process.env.RESEND_API_KEY || 're_PNRRiCug_3XnVrdnCXfRzqojZiTjrJAJ6';
-            console.log(`Status da chave API Resend: ${resendApiKey ? 'Configurada' : 'Não configurada'}`);
+            // Verificar se todos os dados necessários estão presentes
+            if (!validatedData.email || !validatedData.contactName || !tempPassword) {
+              console.error(`❌ Dados incompletos para envio de email`);
+              return res.status(500).json({ success: false, message: 'Dados incompletos para envio de email' });
+            }
             
-            // Enviar o convite
+            // Log detalhado para diagnóstico
+            console.log(`📧 Enviando email para ${validatedData.email}`);
+            
+            // Enviar o email usando a função do módulo
             const emailResult = await emailResend.sendInvitationEmail({
               to: validatedData.email,
               name: validatedData.contactName,
@@ -524,48 +589,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               role: 'Cliente'
             });
             
-            console.log('Resposta do serviço de email:', JSON.stringify(emailResult, null, 2));
-            
             if (emailResult && emailResult.success) {
-              console.log(`✅ Email de convite enviado com sucesso para ${validatedData.email}`);
-              // Salvando a senha temporária nos detalhes do cliente para referência futura
-              if (firestoreClientId) {
-                await updateFirestoreClient(firestoreClientId, { 
-                  lastTempPassword: tempPassword, // armazenar temporariamente para referência
-                });
-              }
+              console.log(`✅ Email enviado com sucesso: ${emailResult.message}`);
             } else {
-              console.error(`❌ Falha ao enviar email: ${emailResult ? emailResult.message : 'Erro desconhecido'}`);
-              
-              // Mesmo com falha de email, mantemos a senha nos detalhes do cliente para acesso manual
-              if (firestoreClientId) {
-                await updateFirestoreClient(firestoreClientId, { 
-                  lastTempPassword: tempPassword, // armazenar para referência caso email falhe
-                });
-              }
+              console.error(`⚠️ Falha no envio de email: ${emailResult?.message || 'Erro desconhecido'}`);
+              // Falha no envio não impede a criação do cliente e usuário
             }
-            console.log(`=== FIM PROCESSO DE ENVIO DE EMAIL ===`);
           } catch (emailError) {
-            console.error('❌ Erro crítico ao enviar email de convite:', emailError);
-            
-            // Log detalhado do erro para diagnóstico
-            if (emailError instanceof Error) {
-              console.error('Detalhes do erro:', emailError.message);
-              console.error('Stack trace:', emailError.stack);
-            }
-            
-            // Mesmo com erro, armazenar a senha temporária para poder informar manualmente
-            if (firestoreClientId) {
-              try {
-                await updateFirestoreClient(firestoreClientId, { 
-                  lastTempPassword: tempPassword, // armazenar para referência caso email falhe
-                });
-                console.log('✅ Senha temporária salva nos detalhes do cliente para acesso manual');
-              } catch (updateError) {
-                console.error('Erro ao salvar senha temporária:', updateError);
-              }
-            }
+            console.error(`❌ Erro crítico ao enviar email:`, emailError);
+            // Continuar mesmo com erro no email
           }
+          
+          console.log(`🔹 FIM DO PROCESSAMENTO DE CLIENTE 🔹`);
+          // Retornar mensagem informativa ao administrador
+          console.log(`
+            ✨ INSTRUÇÕES IMPORTANTES ✨
+            Cliente: ${validatedData.companyName}
+            Email: ${validatedData.email}
+            Senha: ${tempPassword}
+            
+            Se o email não for recebido, forneça estas credenciais manualmente.
+          `);
         } catch (userError) {
           console.error('Erro ao criar usuário para o cliente:', userError);
         }

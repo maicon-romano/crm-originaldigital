@@ -81,6 +81,7 @@ export interface FirestoreClient {
   username?: string;      // Nome de usuário para login
   role?: string;          // Papel do cliente no sistema (geralmente 'cliente')
   userType?: string;      // Tipo de usuário (geralmente 'client')
+  lastTempPassword?: string; // Senha temporária armazenada para referência
   createdAt: number;      // Timestamp
   updatedAt: number;      // Timestamp
 }

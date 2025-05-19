@@ -14,6 +14,13 @@ export interface SendInvitationParams {
   role: string;
 }
 
+export interface EmailResponse {
+  success: boolean;
+  message: string;
+  error?: any;
+  data?: any;
+}
+
 /**
  * Cria o template HTML para o email de convite
  */
@@ -102,7 +109,7 @@ const createInvitationTemplate = (params: SendInvitationParams): string => {
  * @param params Parâmetros para o email de convite
  * @returns Promise com o resultado do envio
  */
-export const sendInvitationEmail = async (params: SendInvitationParams): Promise<{ success: boolean; message: string }> => {
+export const sendInvitationEmail = async (params: SendInvitationParams): Promise<EmailResponse> => {
   try {
     console.log(`⏳ Iniciando envio de convite para ${params.to} (${params.name}) com papel ${params.role}`);
     
