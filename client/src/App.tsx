@@ -46,20 +46,27 @@ function PasswordCheck({ children }: { children: ReactNode }) {
 
 // Componente para restringir acesso de clientes a determinadas rotas
 function NoClientAccess({ children }: { children: ReactNode }) {
-  const { isClient, isLoading, isAuthenticated } = useAuth();
+  const { isClient, isLoading, isAuthenticated, user } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
     // Se o usuário for cliente, redireciona imediatamente para o dashboard
-    if (!isLoading && isClient) {
-      console.log("Usuário do tipo cliente tentando acessar área restrita. Redirecionando...");
-      navigate("/dashboard");
+    if (!isLoading && isAuthenticated && (isClient || user?.userType === 'client')) {
+      console.log("BLOQUEIO REFORÇADO: Usuário tipo cliente tentando acessar área restrita. Redirecionando...");
+      // Forçar redirecionamento com timeout para garantir que aconteça
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 100);
       return;
     }
-  }, [isLoading, isClient, navigate]);
+  }, [isLoading, isClient, isAuthenticated, user, navigate]);
 
   // Verificações de segurança adicionais para evitar renderização mesmo que o redirecionamento falhe
-  if (isLoading || !isAuthenticated || isClient) {
+  if (isLoading || !isAuthenticated || isClient || user?.userType === 'client') {
+    // Garantir redirecionamento como última camada de segurança
+    if (isAuthenticated && (isClient || user?.userType === 'client')) {
+      navigate("/dashboard");
+    }
     return null;
   }
 

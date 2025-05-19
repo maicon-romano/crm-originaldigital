@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { storage } from './storage';
 import { getPublicFolderLink } from './share-drive';
+import { getFirestoreClientById } from './firebase-admin';
 
 /**
  * Registra as rotas relacionadas ao Google Drive no aplicativo Express
@@ -11,17 +12,18 @@ export function registerDriveRoutes(app: Express): void {
    */
   app.get('/api/clients/:id/drive-folder', async (req: Request, res: Response) => {
     try {
-      const clientId = parseInt(req.params.id);
+      const clientId = req.params.id;
       
-      if (isNaN(clientId)) {
+      if (!clientId) {
         return res.status(400).json({ 
           success: false, 
           message: 'ID de cliente inválido' 
         });
       }
       
-      // Verificar se o cliente existe
-      const client = await storage.getClient(clientId);
+      // Buscar o cliente diretamente do Firestore usando a ID de string
+      const client = await getFirestoreClientById(clientId);
+      
       if (!client) {
         return res.status(404).json({ 
           success: false, 
@@ -48,7 +50,7 @@ export function registerDriveRoutes(app: Express): void {
         const folderUrl = getPublicFolderLink(client.googleDriveFolderId);
         
         // Atualizar o cliente com a URL para uso futuro
-        await storage.updateClient(clientId, { googleDriveFolderUrl: folderUrl });
+        await storage.updateFirestoreClient(clientId, { googleDriveFolderUrl: folderUrl });
         
         return res.json({
           success: true,
