@@ -67,10 +67,20 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false,
     }
   }
 
-  // Restrições específicas para clientes - garantia adicional de segurança
+  // BLOQUEIO COMPLETO: Restrições específicas para clientes
+  // Verificação rigorosa de todos os cenários possíveis
   if (isClient || user?.userType === 'client' || user?.role === 'cliente') {
-    // Clientes não podem acessar as seguintes páginas:
-    if (href === '/clients' || href === '/dashboard' || href === '/users' || staffOnly) {
+    console.log(`BLOQUEIO DE MENU: Avaliando acesso de ${user?.email} à página ${href}`);
+    
+    // Lista explícita e completa de páginas bloqueadas para clientes
+    const paginasBloqueadasParaClientes = [
+      '/dashboard', '/clients', '/users', '/invoices', 
+      '/proposals', '/expenses', '/settings'
+    ];
+    
+    // Bloquear acesso a qualquer uma dessas páginas ou se tiver marcação staffOnly
+    if (paginasBloqueadasParaClientes.includes(href) || staffOnly) {
+      console.log(`BLOQUEADO: Item de menu ${href} não permitido para clientes`);
       return null;
     }
   }
@@ -131,14 +141,15 @@ export function Sidebar() {
       href: '/dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
       text: 'Dashboard',
-      adminOnly: false
+      adminOnly: false,
+      staffOnly: true // Não deve aparecer para clientes
     },
     {
       href: '/clients',
       icon: <Users className="h-5 w-5" />,
       text: 'Clientes',
       adminOnly: false,
-      staffOnly: true  // Essa propriedade garante que o link não aparece para clientes
+      staffOnly: true  // Não deve aparecer para clientes
     },
     {
       href: '/projects',
