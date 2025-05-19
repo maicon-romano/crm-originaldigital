@@ -96,12 +96,20 @@ export default function App() {
   useEffect(() => {
     // Se o usuário estiver logado e não estiver na página de troca de senha
     if (!isLoading && user && location !== '/change-password') {
-      // Verificação rigorosa: qualquer usuário que precisa redefinir senha é redirecionado
-      // isto vale para todos os tipos de usuário (cliente, staff, admin)
+      // PRIORIDADE 1: Verificação de redefinição de senha para qualquer tipo de usuário
       if (precisa_redefinir_senha === true) {
         console.log(`REDIRECIONAMENTO: Usuário ${user.email} (${user.userType || user.role}) precisa redefinir senha no primeiro login.`);
         // Forçar redirecionamento com máxima prioridade
         navigate("/change-password");
+        return; // Interromper a execução para garantir o redirecionamento
+      }
+      
+      // PRIORIDADE 2: Redirecionamento de rota inicial para cliente
+      // Se for cliente e estiver na rota root ou dashboard, redirecionar para projects
+      if ((user.userType === 'client' || user.role === 'cliente') && 
+          (location === '/' || location === '/dashboard' || location === '/clients')) {
+        console.log(`REDIRECIONAMENTO CLIENTE: Usuário ${user.email} redirecionado para /projects (rota padrão para clientes)`);
+        navigate("/projects");
         return; // Interromper a execução para garantir o redirecionamento
       }
     }

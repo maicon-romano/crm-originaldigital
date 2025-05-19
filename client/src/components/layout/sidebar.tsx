@@ -68,9 +68,9 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false,
   }
 
   // Restrições específicas para clientes - garantia adicional de segurança
-  if (isClient) {
-    // Clientes não podem acessar a página de clientes
-    if (href === '/clients') {
+  if (isClient || user?.userType === 'client' || user?.role === 'cliente') {
+    // Clientes não podem acessar as seguintes páginas:
+    if (href === '/clients' || href === '/dashboard' || href === '/users' || staffOnly) {
       return null;
     }
   }
@@ -275,8 +275,9 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto pt-5 px-2">
           <div className="space-y-1">
             {mainLinks.map((link) => {
-              // Se o usuário for cliente e a página for 'clients', não mostrar o item
-              if ((isClient && link.href === '/clients') || (isClient && link.staffOnly)) {
+              // Verificação rigorosa - o cliente não deve ver os itens proibidos
+              if ((isClient || user?.userType === 'client' || user?.role === 'cliente') && 
+                  (link.href === '/clients' || link.href === '/dashboard' || link.staffOnly)) {
                 return null;
               }
 

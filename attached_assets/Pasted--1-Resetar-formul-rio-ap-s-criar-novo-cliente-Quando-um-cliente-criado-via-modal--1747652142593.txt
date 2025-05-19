@@ -1,0 +1,81 @@
+
+### ✅ 1. **Resetar formulário após criar novo cliente**
+
+> Quando um cliente é criado via modal, os campos preenchidos não devem permanecer.
+
+* Após a submissão do formulário e confirmação da criação:
+
+  * Limpar todos os campos automaticamente
+  * Fechar o modal (se aplicável)
+  * Estar pronto para cadastrar um novo cliente sem precisar recarregar a página
+
+---
+
+### ✅ 2. **Redirecionamento obrigatório para redefinir senha no primeiro acesso**
+
+> A lógica de verificação `precisa_redefinir_senha` já está implementada, mas **só funciona para usuários internos (CRM)**.
+> **Ajustes necessários:**
+
+* O redirecionamento para a tela de redefinir senha também deve funcionar para **usuários com role `cliente`**
+* O redirecionamento deve ocorrer **imediatamente após o login**, **antes de qualquer rota ser carregada**
+* Após redefinir a senha com sucesso:
+
+  * Atualizar `precisa_redefinir_senha: false` no Firestore
+  * Redirecionar o cliente para sua rota padrão (ver item 3)
+
+---
+
+### ✅ 3. **Redefinir rota padrão inicial para cliente**
+
+> Usuários com papel `cliente` devem ter a **página inicial como `/projects`**
+
+**Ajustes:**
+
+* Após login, se `role === 'cliente'`:
+
+  * Redirecionar diretamente para `/projects`
+* O cliente **não pode acessar**:
+
+  * `/dashboard`
+  * `/clients`
+
+---
+
+### ✅ 4. **Restringir acesso via URL (proteção real das rotas)**
+
+> Mesmo se o cliente digitar a URL manualmente, ele **não pode visualizar as páginas restritas**
+
+**Regras a aplicar:**
+
+* Adicionar validação de `role` para cada rota protegida
+* Se um `cliente` tentar acessar `/dashboard` ou `/clients`:
+
+  * Redirecionar para `/projects`
+  * Ou exibir uma mensagem de "Acesso não autorizado"
+
+---
+
+### ✅ 5. **Remover do menu de navegação as rotas proibidas para clientes**
+
+> O menu lateral ou header deve ser dinâmico com base na `role` do usuário
+
+**Ajustes:**
+
+* Se `role === 'cliente'`, ocultar visualmente:
+
+  * Link para `/clients`
+  * Link para `/dashboard`
+
+ 
+
+---
+
+## 🎯 Ações esperadas
+
+* [ ] Limpar formulário após criação de cliente
+* [ ] Redirecionar **qualquer usuário** com `precisa_redefinir_senha: true` para tela de redefinição
+* [ ] Definir `/projects` como **rota inicial do cliente**
+* [ ] Ocultar visualmente e proteger por rota `/dashboard` e `/clients`
+* [ ] Validar no backend ou no contexto da aplicação que `cliente` só acessa os próprios dados 
+
+
