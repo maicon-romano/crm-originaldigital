@@ -105,11 +105,18 @@ export default function App() {
       }
       
       // PRIORIDADE 2: Redirecionamento de rota inicial para cliente
-      // Se for cliente e estiver na rota root ou dashboard, redirecionar para projects
-      if ((user.userType === 'client' || user.role === 'cliente') && 
-          (location === '/' || location === '/dashboard' || location === '/clients')) {
-        console.log(`REDIRECIONAMENTO CLIENTE: Usuário ${user.email} redirecionado para /projects (rota padrão para clientes)`);
-        navigate("/projects");
+      // Se for cliente e estiver na rota root ou dashboard ou qualquer área restrita, redirecionar para projects
+      const isClientUser = user.userType === 'client' || user.role === 'cliente';
+      const restrictedPathsForClients = ['/', '/dashboard', '/clients', '/users', '/reports'];
+      
+      if (isClientUser && restrictedPathsForClients.includes(location)) {
+        console.log(`REDIRECIONAMENTO CLIENTE: Usuário ${user.email} (${user.userType || user.role}) redirecionado para /projects (rota padrão para clientes)`);
+        
+        // Usar setTimeout para garantir que o redirecionamento aconteça após renderização completa
+        setTimeout(() => {
+          navigate("/projects");
+        }, 10);
+        
         return; // Interromper a execução para garantir o redirecionamento
       }
     }

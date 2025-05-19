@@ -178,12 +178,25 @@ export const getFirestoreUserById = async (userId: string): Promise<FirestoreUse
       const userData = userDoc.data() as FirestoreUser;
       console.log("Dados brutos do usuário no Firestore:", userData);
       
-      // Simplesmente preservar o valor original do campo precisa_redefinir_senha
-      // Sem fazer suposições ou modificações
+      // NOVA LÓGICA REFORÇADA para detecção de redefinição de senha
+      // Especialmente importante para usuários do tipo cliente
+      const isClientUser = userData.userType === 'client' || userData.role === 'cliente';
+      
       const userWithFlags = {
         ...userData,
-        // Usar o valor original sem alterações
-        precisa_redefinir_senha: userData.precisa_redefinir_senha
+        // Verificações mais robustas para garantir detecção correta:
+        // 1. Usar flag explícita se existir
+        // 2. Para clientes, forçar como true se tiver lastTempPassword
+        // 3. Para qualquer tipo de usuário, default para true se nada for especificado (segurança)
+        precisa_redefinir_senha: 
+          // Se o campo estiver explicitamente definido, usar o valor
+          typeof userData.precisa_redefinir_senha === 'boolean' 
+            ? userData.precisa_redefinir_senha 
+            // Se for cliente E tiver senha temporária, forçar redefinição
+            : (isClientUser && userData.lastTempPassword) 
+              ? true 
+              // Padrão seguro: assumir true se nada for especificado
+              : true
       };
       
       // Depuração
@@ -316,14 +329,28 @@ export const loginWithEmailAndPassword = async (email: string, password: string)
       console.log("Usuário não encontrado no Firestore, criando registro...");
       
       // Criar um usuário no Firestore se não existir
+      // AVISO: este é um caso raro, pois normalmente os usuários já são criados via API
+      // VOU VERIFICAR SE É UM EMAIL DE CLIENTE para definir o tipo corretamente
+      
+      // Verificar se o email pertence a um cliente existente
+      const clientCollection = collection(db, 'clientes');
+      const clientQuery = query(clientCollection, where("email", "==", email));
+      const clientSnapshot = await getDocs(clientQuery);
+      
+      // Determinar se é um cliente com base no email
+      const isClientEmail = !clientSnapshot.empty;
+      
       await setDoc(doc(usersCollection, userCredential.user.uid), {
         id: userCredential.user.uid,
         username: email.split('@')[0],
         name: userCredential.user.displayName || email.split('@')[0],
         email: email,
-        userType: userCredential.user.uid === ADMIN_UID ? 'admin' : 'staff',
-        role: userCredential.user.uid === ADMIN_UID ? 'admin' : 'usuario',
+        // Se o email corresponder a um cliente, definir como cliente
+        userType: userCredential.user.uid === ADMIN_UID ? 'admin' : (isClientEmail ? 'client' : 'staff'),
+        role: userCredential.user.uid === ADMIN_UID ? 'admin' : (isClientEmail ? 'cliente' : 'usuario'),
         active: true,
+        // SEMPRE definir precisa_redefinir_senha como true para novo usuário
+        precisa_redefinir_senha: true,
         createdAt: Date.now(),
         updatedAt: Date.now()
       });
