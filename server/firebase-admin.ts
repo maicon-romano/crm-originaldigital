@@ -45,7 +45,8 @@ try {
 
 // Referência às coleções
 const usersCollection = firestore.collection('usuarios');
-const clientsCollection = firestore.collection('clientes');
+const clientsCollection = firestore.collection('clientes'); // Nome em português usado no backend
+const clientsCollectionEn = firestore.collection('clients'); // Nome em inglês para compatibilidade com frontend
 
 // Interface para cliente no Firestore
 export interface FirestoreClient {
@@ -89,7 +90,13 @@ export async function createFirestoreClient(clientData: Omit<FirestoreClient, 'c
     updatedAt: now
   };
 
+  // Salvar na coleção 'clientes' (versão em português)
   const docRef = await clientsCollection.add(clientToSave);
+  
+  // Também salvar na coleção 'clients' (versão em inglês) para compatibilidade
+  const enDocRef = await clientsCollectionEn.doc(docRef.id).set(clientToSave);
+  
+  // Retornar os dados salvos
   const snapshot = await docRef.get();
   
   return {

@@ -468,6 +468,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             emailVerified: false,
           });
           
+          console.log(`Criado usuário no Firebase Auth com UID: ${userRecord.uid}`);
+          
           // Criar perfil do usuário no Firestore
           const userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'> = {
             id: userRecord.uid,
@@ -482,6 +484,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             active: true,
             precisa_redefinir_senha: true
           };
+          
+          console.log(`Salvando usuário com dados completos:`, userData);
           
           // Salvar o usuário no Firestore
           await createFirestoreUser(userData);

@@ -6,10 +6,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// ID da pasta principal "Clientes" no Google Drive (confirme este ID)
+// ID da pasta principal "Clientes" no Google Drive
+// É importante que este ID seja o correto da pasta compartilhada com a conta de serviço
 const CLIENTES_FOLDER_ID = '18abqgDcOAkIzp79CYO9EpH2RrgluPnBI';
 
 // Flag para habilitar/desabilitar Google Drive durante desenvolvimento
+// Sempre habilitado em produção
 const ENABLE_GOOGLE_DRIVE = true;
 
 // Estrutura das pastas do cliente
