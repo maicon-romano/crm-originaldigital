@@ -111,18 +111,22 @@ export default function App() {
       
       <Route path="/clients">
         <PasswordCheck>
-          <MainLayout>
-            <ClientsPage />
-          </MainLayout>
+          <NoClientAccess>
+            <MainLayout>
+              <ClientsPage />
+            </MainLayout>
+          </NoClientAccess>
         </PasswordCheck>
       </Route>
       
       <Route path="/clients/:id">
         {params => (
           <PasswordCheck>
-            <MainLayout>
-              <ClientDetailPage id={params.id} />
-            </MainLayout>
+            <NoClientAccess>
+              <MainLayout>
+                <ClientDetailPage id={params.id} />
+              </MainLayout>
+            </NoClientAccess>
           </PasswordCheck>
         )}
       </Route>
