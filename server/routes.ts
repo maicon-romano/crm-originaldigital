@@ -474,31 +474,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Criado usuário no Firebase Auth com UID: ${userRecord.uid}`);
           
-          // Criar perfil do usuário no Firestore
-          const userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'> = {
-            id: userRecord.uid,
-            username: validatedData.email.split('@')[0],
-            name: validatedData.contactName,
-            email: validatedData.email,
-            phone: validatedData.phone || '',
-            userType: 'client',
-            role: 'cliente',
-            position: validatedData.description || '',
-            clientId: client.id,
-            active: true,
-            precisa_redefinir_senha: true
-          };
-          
-          console.log(`Salvando usuário com dados completos:`, userData);
-          
-          // Salvar o usuário no Firestore
-          await createFirestoreUser(userData);
+          // Não vamos mais criar registro na coleção de usuários para clientes
+          // Vamos apenas atualizar o registro do cliente na coleção 'clientes'
+          // com as informações necessárias
+          console.log(`Atualizando cliente no Firestore com os dados de autenticação`);
           firestoreUserId = userRecord.uid;
           console.log(`Usuário cliente criado com ID: ${firestoreUserId}`);
           
-          // Atualizar o cliente no Firestore com o ID do usuário
+          // Atualizar o cliente no Firestore com o ID do usuário e os dados necessários
           if (firestoreClientId) {
-            await updateFirestoreClient(firestoreClientId, { userId: firestoreUserId });
+            await updateFirestoreClient(firestoreClientId, { 
+              userId: firestoreUserId,
+              userType: 'client',
+              role: 'cliente',
+              username: validatedData.email.split('@')[0],
+              precisa_redefinir_senha: true
+            });
             console.log(`Cliente no Firestore atualizado com userId: ${firestoreUserId}`);
           }
           
@@ -514,35 +505,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (emailResult.success) {
               console.log(`Email de convite enviado com sucesso para ${validatedData.email}`);
-              
-              // Enviar o mesmo email com o serviço de backup para garantir
-              try {
-                console.log(`Enviando email de backup via email-resend para ${validatedData.email}`);
-                const resendResult = await require('./email-resend').sendInvitationEmail({
-                  to: validatedData.email,
-                  name: validatedData.contactName,
-                  password: tempPassword,
-                  role: 'Cliente'
-                });
-                console.log('Resultado do envio alternativo:', resendResult);
-              } catch (backupError) {
-                console.error('Erro ao enviar email de backup:', backupError);
-              }
             } else {
               console.error(`Falha ao enviar email: ${emailResult.message}`);
-              // Tentar envio alternativo usando email-resend
-              try {
-                console.log(`Tentando email alternativo para ${validatedData.email}`);
-                const resendResult = await require('./email-resend').sendInvitationEmail({
-                  to: validatedData.email,
-                  name: validatedData.contactName,
-                  password: tempPassword,
-                  role: 'Cliente'
-                });
-                console.log('Resultado do envio alternativo:', resendResult);
-              } catch (altError) {
-                console.error('Erro ao enviar email alternativo:', altError);
-              }
             }
           } catch (emailError) {
             console.error('Erro ao enviar email de convite:', emailError);
