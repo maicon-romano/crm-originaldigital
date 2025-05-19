@@ -44,32 +44,40 @@ function PasswordCheck({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-// Componente para restringir acesso de clientes a determinadas rotas
+// Componente para BLOQUEAR TOTALMENTE acesso de clientes a determinadas rotas
 function NoClientAccess({ children }: { children: ReactNode }) {
   const { isClient, isLoading, isAuthenticated, user } = useAuth();
   const [, navigate] = useLocation();
 
+  // VERIFICAÇÃO IMEDIATA: Cliente tentando acessar área restrita
   useEffect(() => {
-    // Se o usuário for cliente, redireciona imediatamente para o dashboard
-    if (!isLoading && isAuthenticated && (isClient || user?.userType === 'client')) {
-      console.log("BLOQUEIO REFORÇADO: Usuário tipo cliente tentando acessar área restrita. Redirecionando...");
-      // Forçar redirecionamento com timeout para garantir que aconteça
+    // Verificação rigorosa - se for cliente OU userType='client' OU role='cliente'
+    if (!isLoading && isAuthenticated && 
+        (isClient || user?.userType === 'client' || user?.role === 'cliente')) {
+      console.log("BLOQUEIO TOTAL: Usuário tipo cliente tentando acessar área restrita. Bloqueando acesso.");
+      // Redirecionamento imediato para dashboard
+      navigate("/dashboard");
+      // Segunda camada de segurança com timeout
       setTimeout(() => {
         navigate("/dashboard");
-      }, 100);
+      }, 50);
       return;
     }
   }, [isLoading, isClient, isAuthenticated, user, navigate]);
 
-  // Verificações de segurança adicionais para evitar renderização mesmo que o redirecionamento falhe
-  if (isLoading || !isAuthenticated || isClient || user?.userType === 'client') {
-    // Garantir redirecionamento como última camada de segurança
-    if (isAuthenticated && (isClient || user?.userType === 'client')) {
-      navigate("/dashboard");
-    }
-    return null;
+  // TRIPLA CAMADA DE PROTEÇÃO para evitar renderização mesmo se redirecionamento falhar
+  if (isLoading) return null; // Não mostrar nada durante carregamento
+  if (!isAuthenticated) return null; // Não mostrar nada se não autenticado
+  
+  // Verificação rigorosa - se for cliente OU userType='client' OU role='cliente'
+  if (isClient || user?.userType === 'client' || user?.role === 'cliente') {
+    console.log("BLOQUEIO SECUNDÁRIO: Tentativa de acesso bloqueada para usuário cliente.");
+    // Forçar redirecionamento como última camada de segurança
+    navigate("/dashboard");
+    return null; // Garantir que nada seja renderizado
   }
 
+  // Só renderiza o conteúdo se passar por todas as verificações acima
   return <>{children}</>;
 }
 
