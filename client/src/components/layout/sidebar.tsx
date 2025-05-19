@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Shield,
+  FolderIcon,
 } from "lucide-react";
 
 interface NavLink {
@@ -152,6 +153,12 @@ export function Sidebar() {
       icon: <BanknoteIcon className="h-5 w-5" />,
       text: 'Despesas',
       adminOnly: true // Apenas administradores podem ver despesas
+    },
+    {
+      href: '/files',
+      icon: <FolderIcon className="h-5 w-5" />,
+      text: 'Arquivos',
+      adminOnly: false
     },
     {
       href: '/support',

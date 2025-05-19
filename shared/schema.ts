@@ -63,6 +63,7 @@ export const clients = pgTable("clients", {
   paymentMethod: text("payment_method"),
   servicesPlatforms: text("services_platforms"),
   googleDriveFolderId: text("google_drive_folder_id"),
+  googleDriveFolderUrl: text("google_drive_folder_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

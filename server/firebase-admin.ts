@@ -75,6 +75,7 @@ export interface FirestoreClient {
   paymentMethod: string;  // Método de pagamento
   servicesPlatforms: string; // Plataformas de serviço
   googleDriveFolderId?: string; // ID da pasta no Google Drive
+  googleDriveFolderUrl?: string; // URL público da pasta no Google Drive
   userId?: string;        // ID do usuário associado (se existir)
   createdAt: number;      // Timestamp
   updatedAt: number;      // Timestamp
