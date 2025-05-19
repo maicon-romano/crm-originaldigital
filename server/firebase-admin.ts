@@ -20,6 +20,7 @@ export interface FirestoreUser {
   createdAt: number;     // Timestamp
   updatedAt: number;     // Timestamp
   precisa_redefinir_senha: boolean; // Indica se o usuário precisa trocar a senha no primeiro login
+  lastTempPassword?: string;  // Armazena a última senha temporária gerada para o usuário
 }
 
 // Inicializar o admin SDK, verificando se já foi inicializado
