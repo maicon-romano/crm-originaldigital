@@ -136,20 +136,21 @@ export function Sidebar() {
     setMobileMenuOpen(false);
   };
 
+  // Lista de links principais com marcações claras de restrição
   const mainLinks: NavLink[] = [
     {
       href: '/dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
       text: 'Dashboard',
       adminOnly: false,
-      staffOnly: true // Não deve aparecer para clientes
+      staffOnly: true // IMPORTANTE: Não deve aparecer para clientes
     },
     {
       href: '/clients',
       icon: <Users className="h-5 w-5" />,
       text: 'Clientes',
       adminOnly: false,
-      staffOnly: true  // Não deve aparecer para clientes
+      staffOnly: true  // IMPORTANTE: Não deve aparecer para clientes
     },
     {
       href: '/projects',
@@ -286,10 +287,16 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto pt-5 px-2">
           <div className="space-y-1">
             {mainLinks.map((link) => {
-              // Verificação rigorosa - o cliente não deve ver os itens proibidos
-              if ((isClient || user?.userType === 'client' || user?.role === 'cliente') && 
-                  (link.href === '/clients' || link.href === '/dashboard' || link.staffOnly)) {
-                return null;
+              // VERIFICAÇÃO EXTRA: Impedir clientes de ver links proibidos
+              if (isClient || user?.userType === 'client' || user?.role === 'cliente') {
+                // Se for cliente, verificar se o link está na lista de bloqueados
+                const linksProibidosClientes = ['/dashboard', '/clients', '/users', 
+                                           '/invoices', '/proposals', '/expenses', '/settings'];
+                                           
+                if (linksProibidosClientes.includes(link.href) || link.staffOnly || link.adminOnly) {
+                  console.log(`FILTRO DE MENU: Bloqueando link ${link.href} para cliente ${user?.email}`);
+                  return null;
+                }
               }
 
               return (
@@ -309,10 +316,16 @@ export function Sidebar() {
           <div className="mt-8 pt-4 border-t border-gray-700">
             <div className="space-y-1">
               {secondaryLinks.map((link) => {
-                // Mesma verificação rigorosa para links secundários
-                if ((isClient || user?.userType === 'client' || user?.role === 'cliente') && 
-                    (link.href === '/clients' || link.href === '/dashboard' || link.staffOnly)) {
-                  return null;
+                // VERIFICAÇÃO EXTRA: Impedir clientes de ver links secundários proibidos
+                if (isClient || user?.userType === 'client' || user?.role === 'cliente') {
+                  // Se for cliente, verificar se o link está na lista de bloqueados
+                  const linksProibidosClientes = ['/dashboard', '/clients', '/users', 
+                                             '/invoices', '/proposals', '/expenses', '/settings'];
+                                             
+                  if (linksProibidosClientes.includes(link.href) || link.staffOnly || link.adminOnly) {
+                    console.log(`FILTRO DE MENU SECUNDÁRIO: Bloqueando link ${link.href} para cliente ${user?.email}`);
+                    return null;
+                  }
                 }
                 
                 return (
