@@ -418,11 +418,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertClientSchema.parse(req.body);
       
-      // 1. Criar o cliente no banco de dados relacional
-      const client = await storage.createClient(validatedData);
-      console.log(`Cliente criado no banco relacional com ID: ${client.id}`);
-      
-      // 2. Criar o registro no Firestore (coleção 'clientes')
+      // Check if client already exists by email
+      const existingClient = await admin.firestore()
+        .collection('clientes')
+        .where('email', '==', validatedData.email)
+        .get();
+
+      if (!existingClient.empty) {
+        return res.status(409).json({ 
+          message: "Client with this email already exists" 
+        });
+      }
+
+      // Create client only in Firestore
       let firestoreClientId = null;
       let firestoreUserId = null;
       

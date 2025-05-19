@@ -39,6 +39,12 @@ export function ClientsPage() {
       const res = await apiRequest('POST', '/api/clients', client);
       return res.json();
     },
+    onMutate: () => {
+      // Set loading state while creating
+      queryClient.setQueryData(['/api/clients'], (old: any[]) => {
+        return [...(old || []), { id: 'temp', companyName: 'Creating...', status: 'pending' }];
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       toast({

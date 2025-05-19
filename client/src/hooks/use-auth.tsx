@@ -156,9 +156,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const isAuthenticated = !!user;
   
-  // Verificar se o usuário precisa trocar a senha - isso é determinado pela flag no Firestore
-  console.log("Verificando flag precisa_redefinir_senha do usuário:", user);
-  const precisa_redefinir_senha = !!user?.precisa_redefinir_senha;
+  // Check if it's first login for client or if password needs to be changed
+  const precisa_redefinir_senha = !!user?.precisa_redefinir_senha || 
+    (user?.userType === 'client' && auth.currentUser?.metadata.creationTime === auth.currentUser?.metadata.lastSignInTime);
   
   // Função para atualizar o usuário após mudar a senha
   const updateUserAfterPasswordChange = async (): Promise<void> => {

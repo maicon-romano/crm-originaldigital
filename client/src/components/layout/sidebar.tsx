@@ -40,12 +40,12 @@ interface SidebarLinkProps {
 
 const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false }: SidebarLinkProps) => {
   const { user, isAdmin, isStaff } = useAuth();
-  
+
   // Se o link for apenas para admin e o usuário não for admin, não mostra o link
   if (adminOnly && !isAdmin) {
     return null;
   }
-  
+
   // Restrições adicionais para funcionários (staff)
   if (isStaff && !isAdmin) {
     // Funcionários não podem acessar usuários, faturas, propostas, despesas e configurações
@@ -59,7 +59,7 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false 
       return null;
     }
   }
-  
+
   // Usando o padrão de função render para evitar o aninhamento de <a> dentro de <a>
   return (
     <div 
@@ -85,7 +85,7 @@ const SidebarLink = ({ href, icon, text, isActive, collapsed, adminOnly = false 
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isClient } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -259,15 +259,17 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto pt-5 px-2">
           <div className="space-y-1">
             {mainLinks.map((link) => (
-              <SidebarLink
-                key={link.href}
-                href={link.href}
-                icon={link.icon}
-                text={link.text}
-                isActive={location === link.href || location.startsWith(`${link.href}/`)}
-                collapsed={collapsed}
-                adminOnly={link.adminOnly}
-              />
+              !isClient || link.href !== '/clients'? (
+                <SidebarLink
+                  key={link.href}
+                  href={link.href}
+                  icon={link.icon}
+                  text={link.text}
+                  isActive={location === link.href || location.startsWith(`${link.href}/`)}
+                  collapsed={collapsed}
+                  adminOnly={link.adminOnly}
+                />
+              ): null
             ))}
           </div>
 

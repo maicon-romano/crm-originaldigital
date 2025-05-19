@@ -44,6 +44,27 @@ function PasswordCheck({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+import { Navigate } from 'wouter';
+
+// Client route protection component
+function NoClientAccess({ children }: { children: React.ReactNode }) {
+  const { isClient } = useAuth();
+  
+  if (isClient) {
+    return <Navigate to="/dashboard" />;
+  }
+  
+  return <>{children}</>;
+}
+
+// Update the clients route to use protection
+<Route path="/clients">
+  <NoClientAccess>
+    <ClientsPage />
+  </NoClientAccess>
+</Route>
+
+
 export default function App() {
   const { user, isAuthenticated, isLoading, precisa_redefinir_senha } = useAuth();
   const [location, navigate] = useLocation();
