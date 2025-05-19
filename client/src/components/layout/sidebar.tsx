@@ -138,7 +138,8 @@ export function Sidebar() {
       icon: <Users className="h-5 w-5" />,
       text: 'Clientes',
       adminOnly: false,
-      staffOnly: true  // Essa propriedade indica que apenas staff e admin podem ver
+      staffOnly: true,
+      hideFromClient: true  // Nova propriedade para esconder completamente de clientes
     },
     {
       href: '/projects',

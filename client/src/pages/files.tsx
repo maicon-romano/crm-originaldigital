@@ -58,14 +58,19 @@ export default function FilesPage() {
   });
 
   // Função para abrir a pasta do cliente
-  const openFolder = async (clientId: number) => {
+  const openFolder = async (clientId: string) => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/clients/${clientId}/drive-folder`);
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Falha ao acessar a pasta');
+        toast({
+          title: "Erro",
+          description: error.message || 'Falha ao acessar a pasta',
+          variant: "destructive"
+        });
+        return;
       }
       
       const data = await response.json();
