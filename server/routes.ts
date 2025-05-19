@@ -546,16 +546,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const folderId = await createClientFolderStructure(validatedData.companyName);
         
         if (folderId) {
-          // Atualizar o cliente com o ID da pasta do Google Drive no banco relacional
-          await storage.updateClient(client.id, { googleDriveFolderId: folderId });
-          
-          // Atualizar o cliente no Firestore
+          // Atualizar apenas o cliente no Firestore com o ID da pasta do Google Drive
           if (firestoreClientId) {
             await updateFirestoreClient(firestoreClientId, { googleDriveFolderId: folderId });
           }
           
-          // Atualizar o objeto client para a resposta
-          client.googleDriveFolderId = folderId;
+          // Criar objeto do cliente para a resposta ao frontend
+          // Aqui temos apenas um objeto temporário para a resposta, não um registro no banco relacional
+          client = {
+            id: firestoreClientId, // Usamos o ID do Firestore para referência
+            companyName: validatedData.companyName,
+            contactName: validatedData.contactName,
+            email: validatedData.email,
+            phone: validatedData.phone || '',
+            status: validatedData.status || 'active',
+            googleDriveFolderId: folderId,
+            googleDriveFolderUrl: '' // Será preenchido depois se o compartilhamento funcionar
+          };
           
           // Compartilhar a pasta com o email do cliente
           try {
@@ -565,19 +572,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (shareResult.success) {
               console.log(`Pasta compartilhada com sucesso com o email ${validatedData.email}`);
-              // Atualizar o cliente com o link da pasta
-              await storage.updateClient(client.id, { 
-                googleDriveFolderUrl: shareResult.folderUrl 
-              });
               
-              // Atualizar no Firestore também
+              // Atualizar apenas no Firestore
               if (firestoreClientId) {
                 await updateFirestoreClient(firestoreClientId, { 
                   googleDriveFolderUrl: shareResult.folderUrl 
                 });
               }
               
-              client.googleDriveFolderUrl = shareResult.folderUrl;
+              // Atualizar o objeto para a resposta
+              if (client) {
+                client.googleDriveFolderUrl = shareResult.folderUrl;
+              }
             } else {
               console.warn(`Falha ao compartilhar pasta, mas o link foi salvo: ${shareResult.folderUrl}`);
             }
