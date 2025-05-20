@@ -177,19 +177,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isFirstLogin = auth.currentUser && 
     auth.currentUser.metadata.creationTime === auth.currentUser.metadata.lastSignInTime;
   
-  // VERIFICAÇÃO REFORÇADA para garantir que qualquer tipo de usuário (ESPECIALMENTE CLIENTES)
-  // seja redirecionado para trocar a senha no primeiro login
+  // VERIFICAÇÃO MODIFICADA - Usar APENAS a flag explícita do usuário
+  // Removida verificação isFirstLogin que estava causando redirecionamentos indesejados
   const precisa_redefinir_senha = Boolean(
-    // 1. Verificar flags explícitas no objeto do usuário
-    user?.precisa_redefinir_senha === true || 
-    // 2. Verificar flag lastTempPassword no cliente
-    (user?.lastTempPassword && user?.lastTempPassword.length > 0) ||
-    // 3. Verificar se é primeiro login para qualquer tipo de usuário
-    (isFirstLogin && 
-      // Garantir que TODOS os tipos de usuários sejam verificados 
-      (user?.userType === 'client' || user?.role === 'cliente' || 
-       user?.userType === 'staff' || user?.role === 'usuario' ||
-       user?.userType === 'admin' || user?.role === 'admin'))
+    // Usar apenas a flag explícita definida no Firestore
+    user?.precisa_redefinir_senha === true ||
+    // Ou se tiver lastTempPassword definido
+    (user?.lastTempPassword && user?.lastTempPassword.length > 0)
   );
   
   // Adicionar log para depuração de redirecionamento
