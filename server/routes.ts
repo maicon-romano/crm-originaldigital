@@ -27,6 +27,55 @@ import { registerEmailRoutes } from './email-routes';
 import { registerDriveRoutes } from './drive-routes';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ENDPOINT TEMPORÁRIO: Corrigir a flag precisa_redefinir_senha para usuários admin
+  app.get("/api/corrigir-admin", async (req, res) => {
+    try {
+      // Buscar registros de usuários admin no Firestore
+      const usersCol = admin.firestore().collection('usuarios');
+      const adminQuery = await usersCol.where('userType', '==', 'admin').get();
+      
+      if (adminQuery.empty) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Nenhum usuário administrador encontrado" 
+        });
+      }
+      
+      // Lista de operações de atualização
+      const batch = admin.firestore().batch();
+      let count = 0;
+      
+      // Para cada administrador, remover a flag de redefinição de senha
+      adminQuery.forEach(doc => {
+        batch.update(doc.ref, { 
+          precisa_redefinir_senha: false,
+          lastTempPassword: null,
+          updatedAt: Date.now()
+        });
+        count++;
+      });
+      
+      // Executar todas as operações
+      await batch.commit();
+      
+      console.log(`✅ Corrigido: ${count} usuários administradores não precisam mais redefinir senha.`);
+      
+      // Retornar resultado
+      return res.status(200).json({
+        success: true,
+        message: `${count} usuários admin corrigidos. Você pode fazer login normalmente agora.`,
+        count
+      });
+    } catch (error) {
+      console.error("Erro ao redefinir flags de admin:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro ao corrigir usuários administradores", 
+        error: error.toString() 
+      });
+    }
+  });
+  
   // Registrar as rotas de email
   registerEmailRoutes(app);
   
